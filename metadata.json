@@ -1,0 +1,6 @@
+{
+  "name": "FIRJAN IMPACTA AI",
+  "description": "Plataforma Institucional de Inteligência Operacional Contínua baseada em IA para a Firjan fluminense.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

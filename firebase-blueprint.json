@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil dos colaboradores e liderança da Firjan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["Colaborador", "Líder/Gestor", "Administrador", "Comissão Avaliadora", "Super Admin"] },
+        "department": { "type": "string" },
+        "points": { "type": "integer" },
+        "badges": { "type": "array" },
+        "avatar": { "type": "string" },
+        "matricula": { "type": "string" },
+        "setor": { "type": "string" },
+        "unidade": { "type": "string" },
+        "estado": { "type": "string" },
+        "cidade": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "role", "department", "points", "badges", "avatar"]
+    },
+    "Idea": {
+      "title": "Idea",
+      "description": "Proposta de ideias e inovações no ecossistema Firjan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "problem": { "type": "string" },
+        "solution": { "type": "string" },
+        "impactExpected": { "type": "string" },
+        "category": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorDept": { "type": "string" },
+        "status": { "type": "string", "enum": ["Em análise", "Aprovado", "Reprovado", "Em implementação", "Finalizado"] },
+        "likes": { "type": "integer" },
+        "likedBy": { "type": "array" },
+        "comments": { "type": "array" },
+        "pointsRewarded": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "description", "problem", "solution", "impactExpected", "category", "authorId", "authorName", "authorDept", "status", "likes", "likedBy", "comments", "pointsRewarded", "createdAt"]
+    },
+    "OnboardingStep": {
+      "title": "OnboardingStep",
+      "description": "Módulos e guias de integração do novo colaborador",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Institucional", "Tecnologia", "Processos", "Segurança"] },
+        "type": { "type": "string", "enum": ["video", "doc", "task"] },
+        "duration": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "contentMarkdown": { "type": "string" }
+      },
+      "required": ["id", "title", "category", "type", "duration", "isCompleted"]
+    },
+    "WikiArticle": {
+      "title": "WikiArticle",
+      "description": "Artigo ou tutorial corporativo da wiki de conhecimentos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array" },
+        "favoritesCount": { "type": "integer" },
+        "excerpt": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "category", "tags", "favoritesCount", "excerpt", "createdAt"]
+    },
+    "OperationalInsight": {
+      "title": "OperationalInsight",
+      "description": "Insight ou gargalo operacional gerado e auditado por IA",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["gargalo", "retrabalho", "processo lento", "desperdício", "duplicidade"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "area": { "type": "string" },
+        "detectedAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Pendente", "Analisando", "Resolvido"] }
+      },
+      "required": ["id", "type", "title", "description", "impact", "recommendation", "area", "detectedAt", "status"]
+    },
+    "SystemAuditLog": {
+      "title": "SystemAuditLog",
+      "description": "Registros de eventos e auditoria de segurança",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "ip": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "userId", "userName", "action", "details", "ip"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Coleção de perfis de usuário"
+    },
+    "/ideas/{ideaId}": {
+      "schema": { "$ref": "#/entities/Idea" },
+      "description": "Coleção de propostas de inovações"
+    },
+    "/onboarding/{stepId}": {
+      "schema": { "$ref": "#/entities/OnboardingStep" },
+      "description": "Módulos de Onboarding institucional"
+    },
+    "/wiki/{articleId}": {
+      "schema": { "$ref": "#/entities/WikiArticle" },
+      "description": "Gabarito de artigos da Wiki de conhecimento"
+    },
+    "/insights/{insightId}": {
+      "schema": { "$ref": "#/entities/OperationalInsight" },
+      "description": "Alertas e gargalos sob análise artificial"
+    },
+    "/logs/{logId}": {
+      "schema": { "$ref": "#/entities/SystemAuditLog" },
+      "description": "Log de transações críticas"
+    }
+  }
+}

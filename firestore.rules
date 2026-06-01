@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -----------------------------------------------------------------
+    // Catch-All Default Deny Gate
+    // -----------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -----------------------------------------------------------------
+    // Core Helpers Definitions
+    // -----------------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isFirjanUser() {
+      return isSignedIn() && (
+        request.auth.token.email.matches('.*@firjan\\.com\\.br$') || 
+        request.auth.token.email == 'admin@firjan.com.br'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // -----------------------------------------------------------------
+    // Validation Blueprints (Anti-Update-Gap)
+    // -----------------------------------------------------------------
+    function isValidUserProfile(data) {
+      return data.id is string &&
+             data.name is string && data.name.size() <= 150 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.role is string && (data.role == 'Colaborador' || data.role == 'Líder/Gestor' || data.role == 'Administrador' || data.role == 'Comissão Avaliadora' || data.role == 'Super Admin') &&
+             data.department is string &&
+             data.points is int && data.points >= 0 &&
+             data.badges is list && data.badges.size() <= 30 &&
+             data.avatar is string;
+    }
+
+    function isValidIdea(data) {
+      return data.id is string &&
+             data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.problem is string && data.problem.size() <= 3000 &&
+             data.solution is string && data.solution.size() <= 3000 &&
+             data.impactExpected is string && data.impactExpected.size() <= 3000 &&
+             data.category is string &&
+             data.authorId is string &&
+             data.authorName is string &&
+             data.authorDept is string &&
+             data.status is string && (data.status == 'Em análise' || data.status == 'Aprovado' || data.status == 'Reprovado' || data.status == 'Em implementação' || data.status == 'Finalizado') &&
+             data.likes is int &&
+             data.likedBy is list && data.likedBy.size() <= 10000 &&
+             data.comments is list && data.comments.size() <= 1000 &&
+             data.pointsRewarded is int &&
+             data.createdAt is string;
+    }
+
+    // -----------------------------------------------------------------
+    // Collections Match Rules
+    // -----------------------------------------------------------------
+
+    // User profiles collection
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isFirjanUser();
+      
+      allow create: if isFirjanUser() && isOwner(userId) && isValidUserProfile(incoming()) && incoming().points == 0;
+      
+      allow update: if isFirjanUser() && (
+        // Auto points updates or role correction strictly managed or locked
+        (isOwner(userId) && isValidUserProfile(incoming()) && (
+          // Standard users cannot arbitrarily reward themselves points or elevate roles
+          incoming().points == existing().points && 
+          incoming().role == existing().role
+        )) ||
+        // Admin overrides for role and points
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Administrador', 'Super Admin'])
+      );
+      
+      allow delete: if false; // Profiles are permanent
+    }
+
+    // Ideas and Innovations collection
+    match /ideas/{ideaId} {
+      allow read: if isFirjanUser();
+      allow create: if isFirjanUser() && isValidId(ideaId) && isValidIdea(incoming()) && 
+                       incoming().authorId == request.auth.uid && 
+                       incoming().likes == 0 &&
+                       incoming().status == 'Em análise';
+                       
+      allow update: if isFirjanUser() && (
+        // Action: Like Idea (Incrementing like counts or adding to likedBy array)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['likedBy', 'likes']) && 
+         incoming().likedBy.size() <= existing().likedBy.size() + 1) ||
+         
+        // Action: Comment Idea (Adding details to comments array)
+        (incoming().diff(existing()).affectedKeys().hasOnly(['comments'])) ||
+        
+        // Action: Edit Own Idea Description/Title
+        (incoming().authorId == request.auth.uid && 
+         existing().status == 'Em análise' && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'problem', 'solution', 'impactExpected', 'category'])) ||
+         
+        // Action: Change Status / Reward Points (By committees or managers)
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Líder/Gestor', 'Administrador', 'Comissão Avaliadora', 'Super Admin'] && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'pointsRewarded', 'aiReview']))
+      );
+      
+      allow delete: if isFirjanUser() && 
+                       existing().authorId == request.auth.uid && 
+                       existing().status == 'Em análise';
+    }
+
+    // Onboarding Steps collection
+    match /onboarding/{stepId} {
+      allow read: if isFirjanUser();
+      allow write: if isFirjanUser() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Administrador', 'Super Admin']
+      );
+    }
+
+    // Wiki Articles collection
+    match /wiki/{articleId} {
+      allow read: if isFirjanUser();
+      allow write: if isFirjanUser() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Administrador', 'Super Admin']
+      );
+    }
+
+    // Operational insights / Gargalos collection
+    match /insights/{insightId} {
+      allow read: if isFirjanUser();
+      allow write: if isFirjanUser() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Líder/Gestor', 'Administrador', 'Comissão Avaliadora', 'Super Admin']
+      );
+    }
+
+    // System Log auditing collection
+    match /logs/{logId} {
+      allow read: if isFirjanUser() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Administrador', 'Super Admin']
+      );
+      allow create: if isFirjanUser() && incoming().userId == request.auth.uid;
+      allow update, delete: if false; // Transactions logging is append-only
+    }
+  }
+}

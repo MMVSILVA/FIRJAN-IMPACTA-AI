@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-purple-500: #9D4EDD;
+  --color-purple-600: #7B2CBF;
+  --color-purple-700: #5A189A;
+  --color-green-400: #00FF41;
+  --color-green-500: #00E436;
+  --color-zinc-950: #040406;
+}
+
+/* Custom scrollbars for the glassmorphic sidebar and chats */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 5, 8, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(157, 78, 221, 0.35);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.6);
+}
+
+/* Glassmorphism utility classes - High Fidelity & Deeply Polished */
+.glass-panel {
+  background: rgba(10, 10, 14, 0.85);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-purple {
+  background: rgba(18, 10, 32, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(157, 78, 221, 0.22);
+  box-shadow: 0 10px 30px rgba(157, 78, 221, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-green {
+  background: rgba(6, 16, 10, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 255, 65, 0.22);
+  box-shadow: 0 10px 30px rgba(0, 255, 65, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Neon Glows & Polish Enhancements */
+.neon-glow-purple {
+  box-shadow: 0 0 20px rgba(157, 78, 221, 0.15);
+}
+
+.neon-glow-green {
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
+}
+
+/* High Contrast mode helper styles */
+.high-contrast-mode {
+  background: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast-mode .glass-panel,
+.high-contrast-mode .glass-panel-purple,
+.high-contrast-mode .glass-panel-green {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+}
+
+.high-contrast-mode text, 
+.high-contrast-mode h1, 
+.high-contrast-mode h2, 
+.high-contrast-mode h3, 
+.high-contrast-mode h4, 
+.high-contrast-mode p, 
+.high-contrast-mode span,
+.high-contrast-mode label {
+  color: #ffffff !important;
+}
+
+.high-contrast-mode button, 
+.high-contrast-mode a {
+  border: 2px solid #22c55e !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast-mode input,
+.high-contrast-mode select,
+.high-contrast-mode textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #a855f7 !important;
+}
+
+/* Dyslexic font family helper */
+.dyslexic-font-active {
+  font-family: "Comic Sans MS", "Chalkboard SE", sans-serif !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.18em !important;
+  line-height: 1.6 !important;
+}
+
+/* Focus outlines for better keyboard accessibility */
+*:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* Force black background on html and body to eliminate browser white default space */
+html, body {
+  background-color: #000000 !important;
+  color: #f4f4f5 !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+/* Global Font size overrides (Responsive & Accessibility scalable text) */
+.textSize-sm {
+  font-size: 0.8rem !important;
+}
+.textSize-sm p, .textSize-sm span, .textSize-sm li {
+  font-size: 0.775rem !important;
+}
+
+.textSize-base {
+  font-size: 0.95rem !important; /* Increased base font size for better legibility */
+}
+.textSize-base p, .textSize-base span, .textSize-base li {
+  font-size: 0.925rem !important;
+}
+.textSize-base h1 {
+  font-size: 1.6rem !important;
+}
+.textSize-base h2 {
+  font-size: 1.35rem !important;
+}
+.textSize-base h3 {
+  font-size: 1.15rem !important;
+}
+
+.textSize-lg {
+  font-size: 1.15rem !important;
+}
+.textSize-lg p, .textSize-lg span, .textSize-lg li, .textSize-lg label, .textSize-lg input {
+  font-size: 1.1rem !important;
+}
+.textSize-lg h1 {
+  font-size: 1.95rem !important;
+}
+.textSize-lg h2 {
+  font-size: 1.65rem !important;
+}
+.textSize-lg h3 {
+  font-size: 1.4rem !important;
+}
+
+.textSize-xl {
+  font-size: 1.35rem !important;
+}
+.textSize-xl p, .textSize-xl span, .textSize-xl li, .textSize-xl label, .textSize-xl input {
+  font-size: 1.3rem !important;
+}
+.textSize-xl h1 {
+  font-size: 2.35rem !important;
+}
+.textSize-xl h2 {
+  font-size: 1.95rem !important;
+}
+.textSize-xl h3 {
+  font-size: 1.65rem !important;
+}
+
+
