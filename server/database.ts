@@ -464,10 +464,36 @@ class DatabaseStore {
   private localLogs: SystemAuditLog[] = [...initialAuditLogs];
   public isFallbackMode = true;
 
+  constructor() {
+    this.isFallbackMode = true;
+    this.load();
+  }
+
+  // Helper to get path which is writable even in read-only environments (like Vercel)
+  private getDbPath(): string {
+    if (process.env.VERCEL) {
+      const tempPath = path.join('/tmp', 'local_database.json');
+      // If the writeable /tmp file doesn't exist, try initializing it from the read-only workspace template
+      if (!fs.existsSync(tempPath)) {
+        try {
+          const rootPath = path.join(process.cwd(), 'local_database.json');
+          if (fs.existsSync(rootPath)) {
+            fs.copyFileSync(rootPath, tempPath);
+            console.log('[LOCAL STORE] Banco inicial copiado para o diretório temporário /tmp.');
+          }
+        } catch (copyErr) {
+          console.error('[LOCAL STORE] Falha ao copiar base inicial para /tmp:', copyErr);
+        }
+      }
+      return tempPath;
+    }
+    return path.join(process.cwd(), 'local_database.json');
+  }
+
   // Save all local data to local_database.json for persistent offline storage
   private persist() {
     try {
-      const dbPath = path.join(process.cwd(), 'local_database.json');
+      const dbPath = this.getDbPath();
       const data = {
         users: this.localUsers,
         onboarding: this.localOnboarding,
@@ -485,7 +511,7 @@ class DatabaseStore {
   // Load all local data from local_database.json if exists
   private load() {
     try {
-      const dbPath = path.join(process.cwd(), 'local_database.json');
+      const dbPath = this.getDbPath();
       if (fs.existsSync(dbPath)) {
         const raw = fs.readFileSync(dbPath, 'utf8');
         const data = JSON.parse(raw);
@@ -495,10 +521,10 @@ class DatabaseStore {
         if (data.ideas) this.localIdeas = data.ideas;
         if (data.insights) this.localInsights = data.insights;
         if (data.logs) this.localLogs = data.logs;
-        console.log('[LOCAL STORE] Dados do banco offline carregados com sucesso de local_database.json');
+        console.log('[LOCAL STORE] Dados do banco offline carregados com sucesso de:', dbPath);
       } else {
         this.persist();
-        console.log('[LOCAL STORE] Banco de dados offline criado e semeado inicialmente em local_database.json');
+        console.log('[LOCAL STORE] Banco de dados offline criado e semeado inicialmente em:', dbPath);
       }
     } catch (err) {
       console.error('[LOCAL STORE LOAD FAIL]', err);
