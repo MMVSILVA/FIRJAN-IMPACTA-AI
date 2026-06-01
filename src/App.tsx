@@ -599,8 +599,30 @@ export default function App() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setEditSuccess('Perfil atualizado com sucesso!');
+        // Save to connected user session storage
+        localStorage.setItem('firjan_connected_user', JSON.stringify(data.user));
+
+        // Save to backup local users list
+        const localReg = localStorage.getItem('firjan_local_users');
+        let parsedLocal = [];
+        if (localReg) {
+          try { parsedLocal = JSON.parse(localReg); } catch (e) {}
+        }
+        if (!Array.isArray(parsedLocal)) parsedLocal = [];
+        const idx = parsedLocal.findIndex(u => u.id === data.user.id);
+        if (idx !== -1) {
+          parsedLocal[idx] = data.user;
+        } else {
+          parsedLocal.push(data.user);
+        }
+        localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocal));
+
         setCurrentUser(data.user);
+        setEditSuccess('Perfil atualizado com sucesso!');
+        
+        // Sync with parent state lists (simulatedUsers list etc.)
+        await fetchState(true);
+
         setTimeout(() => {
           setIsEditProfileOpen(false);
           setEditSuccess('');
@@ -609,7 +631,45 @@ export default function App() {
         setEditError(data.error || 'Falha ao atualizar perfil.');
       }
     } catch (err) {
-      setEditError('Erro de conexão ao atualizar perfil no servidor.');
+      console.warn('Network error during profile update, saving locally:', err);
+      // Fallback: save locally
+      const updatedMock: UserProfile = {
+        ...currentUser,
+        name: editName.trim(),
+        matricula: editMatricula.trim(),
+        setor: editSetor,
+        unidade: editUnidade.trim(),
+        estado: editEstado,
+        cidade: editCidade.trim(),
+        avatar: editAvatar,
+        mfaEnabled: editMfaEnabled
+      };
+      
+      localStorage.setItem('firjan_connected_user', JSON.stringify(updatedMock));
+
+      const localReg = localStorage.getItem('firjan_local_users');
+      let parsedLocal = [];
+      if (localReg) {
+        try { parsedLocal = JSON.parse(localReg); } catch (e) {}
+      }
+      if (!Array.isArray(parsedLocal)) parsedLocal = [];
+      const idx = parsedLocal.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) {
+        parsedLocal[idx] = updatedMock;
+      } else {
+        parsedLocal.push(updatedMock);
+      }
+      localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocal));
+
+      setCurrentUser(updatedMock);
+      setEditSuccess('Perfil atualizado (salvo localmente devido ao modo de sobrevivência offline)!');
+      
+      await fetchState(true);
+
+      setTimeout(() => {
+        setIsEditProfileOpen(false);
+        setEditSuccess('');
+      }, 1500);
     } finally {
       setIsSubmitUpdatingProfile(false);
     }
@@ -1650,12 +1710,13 @@ export default function App() {
           {/* Brand header */}
           <div className="flex flex-col gap-3 pb-3 border-b border-zinc-900/80">
             <div className="flex items-center justify-between">
-              <img 
-                src="/impacta_logo.png" 
-                alt="Firjan Impacta AI Logo" 
-                className="h-auto w-[210px] max-w-full object-contain transition-transform duration-200 hover:scale-[1.02]"
-                referrerPolicy="no-referrer"
-              />
+              <div className="flex items-center gap-2">
+                <FirjanLogo className="h-9 w-auto text-white" showSubText={true} />
+                <div className="border-l border-zinc-850 pl-2 leading-none">
+                  <span className="text-[10px] font-black text-green-400 block tracking-wider">CONNECT</span>
+                  <span className="text-[7px] text-zinc-500 font-mono block">RJ 2026</span>
+                </div>
+              </div>
               
               {/* Collapse button on mobile sidebar open */}
               <button
@@ -1666,18 +1727,10 @@ export default function App() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            <div className="flex items-center gap-1.5 text-left">
-              <FirjanLogo className="h-6 w-auto text-zinc-400" showSubText={false} />
-              <div className="border-l border-zinc-850 pl-1.5 leading-none">
-                <span className="text-[8px] font-black text-green-400 block tracking-wider">CONNECT</span>
-                <span className="text-[6px] text-zinc-500 font-mono block">RJ 2026</span>
-              </div>
-            </div>
           </div>
 
           {/* Connected User Profile Widget - Mapeado para matricula, setor e unidade ao logar */}
-          <div className="p-3 bg-zinc-900/40 border border-zinc-850 rounded-xl relative overflow-hidden text-left space-y-2">
+          <div className="p-3.5 bg-zinc-900/70 border border-zinc-800 rounded-xl relative overflow-visible text-left space-y-2.5 shadow-xl">
             <div className="flex items-center justify-between gap-1">
               <div className="flex items-center gap-2 overflow-hidden">
                 <img 
@@ -1685,11 +1738,11 @@ export default function App() {
                   alt={currentUser.name} 
                   className="w-8 h-8 rounded-full border border-purple-500/40 object-cover shrink-0" 
                 />
-                <div className="overflow-hidden">
+                <div className="overflow-visible">
                   <span className="text-xs font-extrabold text-white block truncate leading-tight select-all">
                     {currentUser.name}
                   </span>
-                  <span className="text-[9px] text-purple-300 font-mono block uppercase font-semibold">
+                  <span className="text-[9px] text-purple-300 font-mono block uppercase font-bold tracking-wider">
                     Rank: {currentUser.role}
                   </span>
                 </div>
@@ -1711,41 +1764,41 @@ export default function App() {
                   setEditSuccess('');
                   setIsEditProfileOpen(true);
                 }}
-                className="p-1 px-2 text-[9px] bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md border border-zinc-700/60 transition-all font-semibold flex items-center gap-1 cursor-pointer shrink-0"
+                className="p-1 px-2 text-[9px] bg-zinc-800 hover:bg-zinc-700 text-white rounded-md border border-zinc-700/60 transition-all font-semibold flex items-center gap-1 cursor-pointer shrink-0"
                 title="Editar informações do Perfil"
               >
-                <Edit3 className="w-2.5 h-2.5" /> Editar
+                <Edit3 className="w-2.5 h-2.5 text-purple-400" /> Editar
               </button>
             </div>
 
             {/* Corporate Registration Info tags (Atendendo quesito: Nome, Matrícula e Unidade ao Logar) */}
-            <div className="space-y-1 pt-1.5 border-t border-zinc-900/80 text-[10px] text-zinc-400 font-sans">
-              <div className="flex justify-between">
-                <span className="text-zinc-600 font-semibold font-mono uppercase text-[7.5px]">Matrícula:</span>
-                <strong className="text-zinc-300 font-mono select-all font-bold">{currentUser.matricula || '000000'}</strong>
+            <div className="space-y-2.5 pt-2.5 border-t border-zinc-800/80 text-[10.5px] text-zinc-200 font-sans">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-zinc-400 font-bold font-mono uppercase text-[8px] tracking-wider shrink-0">Matrícula</span>
+                <strong className="text-white font-mono select-all font-black bg-zinc-950 px-1.5 py-0.5 rounded leading-none">{currentUser.matricula || '000000'}</strong>
               </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-600 font-semibold font-mono uppercase text-[7.5px]">Setor/Segmento:</span>
-                <strong className="text-zinc-300 font-semibold truncate max-w-[124px] uppercase">{currentUser.department || currentUser.setor || 'Geral'}</strong>
+              <div className="flex justify-between items-start gap-2">
+                <span className="text-zinc-400 font-bold font-mono uppercase text-[8px] tracking-wider shrink-0">Setor</span>
+                <strong className="text-white font-black text-right uppercase leading-tight max-w-[150px] break-words">{currentUser.department || currentUser.setor || 'Geral'}</strong>
               </div>
-              <div className="flex justify-between gap-1">
-                <span className="text-zinc-600 font-semibold font-mono uppercase text-[7.5px] shrink-0">Unidade Firjan:</span>
-                <strong className="text-green-400 font-bold truncate max-w-[124px] uppercase" title={currentUser.unidade || 'Botafogo Sede'}>
+              <div className="flex flex-col gap-0.5 pt-1 border-t border-zinc-900/40">
+                <span className="text-zinc-400 font-bold font-mono uppercase text-[8px] tracking-wider text-left">Unidade Firjan de Atuação</span>
+                <strong className="text-green-300 font-black uppercase text-[10px] text-left leading-normal break-words" title={currentUser.unidade}>
                   {currentUser.unidade || 'Botafogo Sede'}
                 </strong>
               </div>
             </div>
 
             {/* Score details */}
-            <div className="flex justify-between items-center text-[9px] bg-black/60 p-1.5 rounded-lg border border-zinc-900 font-mono">
+            <div className="flex justify-between items-center text-[9px] bg-black/80 p-2 rounded-lg border border-zinc-800/60 font-mono">
               <div className="text-left">
-                <span className="text-zinc-600 block text-[7.5px] uppercase font-bold leading-none">Saldo:</span>
-                <strong className="text-yellow-400 font-bold">{currentUser.points} pts</strong>
+                <span className="text-zinc-400 block text-[7.5px] uppercase font-bold leading-none tracking-wider">Saldo de Pontos:</span>
+                <strong className="text-yellow-400 font-black text-xs">{currentUser.points} pts</strong>
               </div>
               
               <div className="text-right">
-                <span className="text-zinc-600 block text-[7.5px] uppercase font-bold leading-none">Conquistas:</span>
-                <strong className="text-purple-300 font-bold">{currentUser.badges?.length || 0} medalhas</strong>
+                <span className="text-zinc-400 block text-[7.5px] uppercase font-bold leading-none tracking-wider">Medalhas:</span>
+                <strong className="text-purple-300 font-black text-xs">{currentUser.badges?.length || 0} un</strong>
               </div>
             </div>
 
@@ -1755,7 +1808,7 @@ export default function App() {
 
           {/* Navigation Tab lists */}
           <nav className="space-y-1 align-left text-left">
-            <span className="text-[9px] text-zinc-500 font-mono font-bold uppercase block px-2 mb-1.5">Módulos de Inovação</span>
+            <span className="text-[9px] text-zinc-300 font-mono font-bold uppercase block px-2 mb-1.5 tracking-wider">Módulos de Inovação</span>
             {[
               { id: 'dashboard', name: 'Painel Executivo', icon: TrendingUp },
               { id: 'cadastro', name: 'Portal de Ideias', icon: Lightbulb },
@@ -1774,11 +1827,11 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-xs font-semibold transition-all select-none ${
                     activeTab === tab.id 
-                      ? 'bg-purple-600 text-white font-bold shadow-md shadow-purple-600/15'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+                      ? 'bg-purple-600 text-white font-extrabold shadow-md shadow-purple-600/15 scale-[1.01]'
+                      : 'text-zinc-200 hover:text-white hover:bg-zinc-900/60'
                   }`}
                 >
-                  <IconComp className="w-3.5 h-3.5" /> {tab.name}
+                  <IconComp className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-white' : 'text-purple-400'}`} /> {tab.name}
                 </button>
               );
             })}
@@ -1786,7 +1839,7 @@ export default function App() {
             {/* Protected Tab: Admin */}
             {(currentUser.role === 'Administrador' || currentUser.role === 'Super Admin') && (
               <div className="space-y-1 pt-3 border-t border-zinc-900/80 mt-2">
-                <span className="text-[9px] text-zinc-500 font-mono font-bold uppercase block px-2 mb-1.5">Painel de Controle</span>
+                <span className="text-[9px] text-zinc-300 font-mono font-bold uppercase block px-2 mb-1.5 tracking-wider font-extrabold">Painel de Controle</span>
                 <button
                   id="btn_nav_admin"
                   onClick={() => {
@@ -1795,11 +1848,11 @@ export default function App() {
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-xs font-semibold transition-all select-none ${
                     activeTab === 'admin' 
-                      ? 'bg-green-500 text-black font-bold'
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+                      ? 'bg-green-500 text-black font-extrabold'
+                      : 'text-zinc-200 hover:text-white hover:bg-zinc-900/60'
                   }`}
                 >
-                  <ShieldCheck className="w-3.5 h-3.5" /> Administração
+                  <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'admin' ? 'text-black' : 'text-green-400'}`} /> Administração
                 </button>
               </div>
             )}

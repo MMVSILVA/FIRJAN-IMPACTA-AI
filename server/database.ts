@@ -385,6 +385,71 @@ export const initialIdeas: Idea[] = [
       { stageId: 3, approver: null, role: 'Administrador', date: null, action: 'pending', comment: null }
     ],
     currentStage: 1
+  },
+  {
+    id: 'idea_4',
+    title: 'Prontuário Integrado e Telemedicina para SESI RJ',
+    description: 'Implementar uma plataforma integrada de prontuário digital e telessaúde com inteligência artificial para agilizar os exames de saúde ocupacional dos industriários fluminenses.',
+    problem: 'O tempo de espera para agendamento e emissão de laudos de exames ocupacionais nas clínicas físicas do SESI gera ociosidade nas empresas parceiras.',
+    solution: 'Criar um canal integrado de telemedicina preventiva sob demanda, permitindo pré-triagem virtual via aplicativo Firjan Connect.',
+    impactExpected: 'Redução de 40% no absenteísmo de exames, diagnósticos rápidos e fomento ao bem-estar do trabalhador.',
+    category: 'Saúde e SESI',
+    authorId: 'user_camila',
+    authorName: 'Camila Santos de Oliveira',
+    authorDept: 'Inovação, TI e Transformação Digital',
+    status: 'Aprovado',
+    likes: 12,
+    likedBy: ['user_marcos', 'user_roberto'],
+    comments: [],
+    pointsRewarded: 150,
+    aiReview: {
+      summary: 'Implementação de telessaúde e prontuário ocupacional inteligente para aumento da produtividade médica do SESI.',
+      estimatedImpact: 'Forte conformidade e otimização de tempo de exames de funcionários fluminenses.',
+      suggestions: [
+        'Piloto inicial focado na unidade SESI de Duque de Caxias.',
+        'Verificar compatibilidade com regulamentos do CFM.'
+      ],
+      isDuplicate: false,
+      priority: 'Alta',
+      operationalSaving: 'R$ 220.000/ano'
+    },
+    createdAt: '2026-05-23T14:10:00Z',
+    approvalHistory: [
+      { stageId: 0, approver: 'Camila Santos de Oliveira', role: 'Colaborador', date: '23/05/2026', action: 'submitted', comment: 'Prontuário eletrônico ocupacional centralizado.' }
+    ],
+    currentStage: 4
+  },
+  {
+    id: 'idea_5',
+    title: 'Observatório Digital de Talentos e Analytics do IEL RJ',
+    description: 'Criar uma plataforma inteligente baseada em inteligência preditiva para identificar tendências de mercado e habilidades industriais procuradas no Rio de Janeiro.',
+    problem: 'Falta de conexão ágil em tempo real entre a formação acadêmica do SENAI e as vagas executivas demandadas pelas indústrias associadas ao IEL.',
+    solution: 'Um cockpit unificado para análise preditiva de recrutamento e mapeamento estatístico de vagas da Firjan.',
+    impactExpected: 'Aumento do índice de empregabilidade dos egressos, conexão direta com vagas de estágio e inteligência para novas turmas.',
+    category: 'Gestão Administrativa',
+    authorId: 'user_roberto',
+    authorName: 'Roberto Azevedo Menezes',
+    authorDept: 'Planejamento Estratégico',
+    status: 'Aprovado',
+    likes: 9,
+    likedBy: ['user_marcos', 'user_camila'],
+    comments: [],
+    pointsRewarded: 150,
+    aiReview: {
+      summary: 'Plataforma preditiva IEL de mercado de trabalho e matching inteligente de estagiários fluminenses.',
+      estimatedImpact: 'Estratégico para empregabilidade industrial de nível do Estado do Rio de Janeiro.',
+      suggestions: [
+        'Sincronizar com as demandas corporativas de frotas e indústrias em Volta Redonda.'
+      ],
+      isDuplicate: false,
+      priority: 'Alta',
+      operationalSaving: 'R$ 180.000/ano'
+    },
+    createdAt: '2026-05-24T09:15:00Z',
+    approvalHistory: [
+      { stageId: 0, approver: 'Roberto Azevedo Menezes', role: 'Colaborador', date: '24/05/2026', action: 'submitted', comment: 'Matching preditivo de carreiras do IEL.' }
+    ],
+    currentStage: 4
   }
 ];
 
@@ -632,7 +697,13 @@ class DatabaseStore {
       }
       const userRef = firestoreDb.collection('users').doc(userId);
       const snap = await runWithTimeout(userRef.get(), 2000, 'updateUser_get');
-      if (!snap.exists) return null;
+      if (!snap.exists) {
+        if (updatedUser) {
+          await runWithTimeout(userRef.set(updatedUser), 2000, 'updateUser_set_new');
+          return updatedUser;
+        }
+        return null;
+      }
       const existingUser = snap.data() as UserProfile;
       const cloudUpdated = { ...existingUser, ...updates };
       await runWithTimeout(userRef.set(cloudUpdated), 2000, 'updateUser_set');

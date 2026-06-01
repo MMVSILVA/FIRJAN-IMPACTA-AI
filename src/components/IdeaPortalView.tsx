@@ -134,12 +134,23 @@ export default function IdeaPortalView({
   };
 
   ideas.forEach(i => {
-    const dept = i.authorDept || '';
-    if (dept.toLowerCase().includes('sesi')) segmentCount['SESI RJ']++;
-    else if (dept.toLowerCase().includes('senai')) segmentCount['SENAI RJ']++;
-    else if (dept.toLowerCase().includes('iel')) segmentCount['IEL RJ']++;
-    else if (dept.toLowerCase().includes('suporte') || dept.toLowerCase().includes('ti')) segmentCount['Suporte e TI']++;
-    else segmentCount['Gestão Administrativa']++;
+    const author = users.find(u => u.id === i.authorId);
+    const sector = (author?.setor || '').toLowerCase();
+    const dept = (i.authorDept || author?.department || '').toLowerCase();
+    const title = (i.title || '').toLowerCase();
+    const desc = (i.description || '').toLowerCase();
+
+    if (sector.includes('sesi') || dept.includes('sesi') || title.includes('sesi') || desc.includes('sesi')) {
+      segmentCount['SESI RJ']++;
+    } else if (sector.includes('senai') || dept.includes('senai') || title.includes('senai') || desc.includes('senai')) {
+      segmentCount['SENAI RJ']++;
+    } else if (sector.includes('iel') || dept.includes('iel') || title.includes('iel') || desc.includes('iel')) {
+      segmentCount['IEL RJ']++;
+    } else if (dept.includes('suporte') || dept.includes('ti') || dept.includes('tecnologia')) {
+      segmentCount['Suporte e TI']++;
+    } else {
+      segmentCount['Gestão Administrativa']++;
+    }
   });
 
   // Ranking of collaborators

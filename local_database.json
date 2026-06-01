@@ -1,0 +1,640 @@
+{
+  "users": [
+    {
+      "id": "user_marcos",
+      "name": "Marcos de Souza Silva",
+      "email": "marcos.silva@firjan.com.br",
+      "password": "firjan123",
+      "role": "Colaborador",
+      "department": "Suporte Operacional e Produção",
+      "points": 380,
+      "badges": [
+        "Inovador Iniciante",
+        "Onboarding Completo",
+        "Colaborador Ativo"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+      "matricula": "9827361",
+      "setor": "SENAI",
+      "unidade": "SENAI Maracanã",
+      "estado": "RJ",
+      "cidade": "Rio de Janeiro"
+    },
+    {
+      "id": "user_camila",
+      "name": "Camila Santos de Oliveira",
+      "email": "camila.santos@firjan.com.br",
+      "password": "firjan123",
+      "role": "Líder/Gestor",
+      "department": "Inovação, TI e Transformação Digital",
+      "points": 750,
+      "badges": [
+        "Mentora de Ideias",
+        "Líder Ágil",
+        "Campeã de Economia"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80",
+      "matricula": "7218452",
+      "setor": "SESI",
+      "unidade": "SESI Duque de Caxias",
+      "estado": "RJ",
+      "cidade": "Duque de Caxias"
+    },
+    {
+      "id": "user_roberto",
+      "name": "Roberto Azevedo Menezes",
+      "email": "roberto.azevedo@firjan.com.br",
+      "password": "firjan123",
+      "role": "Comissão Avaliadora",
+      "department": "Planejamento Estratégico",
+      "points": 520,
+      "badges": [
+        "Avaliador de Impacto",
+        "Foco em Eficiência"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80",
+      "matricula": "4839174",
+      "setor": "IEL",
+      "unidade": "Sede Firjan Botafogo",
+      "estado": "RJ",
+      "cidade": "Rio de Janeiro"
+    },
+    {
+      "id": "user_jessica",
+      "name": "Jéssica Lima da Silva",
+      "email": "jessica.lima@firjan.com.br",
+      "password": "firjan123",
+      "role": "Administrador",
+      "department": "Recursos Humanos & Desenvolvimento",
+      "points": 440,
+      "badges": [
+        "Guardiã da Cultura",
+        "Integradora Oficial"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80",
+      "matricula": "5928173",
+      "setor": "Corporativo",
+      "unidade": "Sede Firjan Botafogo",
+      "estado": "RJ",
+      "cidade": "Rio de Janeiro"
+    },
+    {
+      "id": "user_admin",
+      "name": "Super Admin Firjan",
+      "email": "admin@firjan.com.br",
+      "password": "firjan123",
+      "role": "Super Admin",
+      "department": "Presidência e TI Central",
+      "points": 1200,
+      "badges": [
+        "Arquiteto do Ecossistema",
+        "Luz da Firjan"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80",
+      "matricula": "0000001",
+      "setor": "Corporativo",
+      "unidade": "Sede Firjan Botafogo",
+      "estado": "RJ",
+      "cidade": "Rio de Janeiro"
+    },
+    {
+      "id": "user_1780330993303",
+      "name": "Mmvsilva",
+      "email": "mmvsilva@firjan.com.br",
+      "password": "211410P06yaf@",
+      "role": "Colaborador",
+      "department": "Geral",
+      "points": 100,
+      "badges": [
+        "Inovador Iniciante"
+      ],
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80",
+      "mfaEnabled": false
+    }
+  ],
+  "onboarding": [
+    {
+      "id": "step_1",
+      "title": "C.I.O AI • Introdução ao Ecossistema FIRJAN",
+      "category": "Institucional",
+      "type": "video",
+      "duration": "15 min",
+      "isCompleted": true,
+      "contentMarkdown": "# Bem-vindo à FIRJAN & C.I.O AI! \n\nAssista ao vídeo institucional de integração para compreender nossa missão de impulsionar a competitividade industrial do Rio de Janeiro. \n\n## O que é o C.I.O AI?\nO **Corporate Intelligence & Onboarding AI** é uma plataforma inteligente voltada à centralização, organização e disseminação do conhecimento institucional, utilizando inteligência artificial para facilitar o acesso rápido e inteligente às informações corporativas.\n\n## Conexão Digital Unificada:\n* **Pessoas:** Conecte-se com especialistas e responsáveis de cada setor.\n* **Processos & Fluxos:** Siga fluxogramas interativos e estruturados de trabalho.\n* **Documentos & Normas:** Pesquise manuais, políticas e resoluções com busca semântica.\n* **Boas práticas & Conhecimento operacional:** Acesse e colabore na nossa Wiki corporativa viva."
+    },
+    {
+      "id": "step_2",
+      "title": "Políticas de LGPD, Conformidade e Segurança da Informação",
+      "category": "Segurança",
+      "type": "doc",
+      "duration": "20 min",
+      "isCompleted": true,
+      "contentMarkdown": "# Segurança e LGPD na FIRJAN\n\nTodos os colaboradores devem zelar pela confidencialidade dos dados das indústrias parceiras, do SESI e alunos do SENAI.\n\n### Diretrizes Principais de Segurança:\n1. **Troca de Credenciais:** Nunca compartilhe suas senhas corporativas ou códigos de acesso.\n2. **E-mail Corporativo:** Utilize exclusivamente o domínio @firjan.com.br para comunicações de trabalho.\n3. **Proteção de PII:** Dados pessoais coletados de alunos ou empresas estão protegidos em conformidade com as diretrizes da LGPD.\n4. **Estação de Trabalho:** Bloqueie seu computador sempre que se afastar da mesa (fácil atalho Windows + L)."
+    },
+    {
+      "id": "step_3",
+      "title": "Procedimentos Básicos de TI & Acessos à Rede",
+      "category": "Tecnologia",
+      "type": "task",
+      "duration": "25 min",
+      "isCompleted": false,
+      "contentMarkdown": "# Configurando seu Ambiente Tecnológico\n\nSiga os seguintes passos corporativos para estabilização da sua rotina:\n1. **Portal MinhaFirjan:** Efetue o seu primeiro acesso para visualização de contracheques e informes.\n2. **Rede VPN Segura:** Ative a VPN corporativa via FortiClient para trabalhos remotos ou híbridos.\n3. **Assinatura de Marcas:** Configure sua assinatura de e-mail personalizada com as marcas oficiais Firjan, SESI, SENAI ou IEL seguindo o manual visual."
+    },
+    {
+      "id": "step_4",
+      "title": "Guia de Pitching, Ideias e Inovação (FIRJAN IMPACTA AI)",
+      "category": "Processos",
+      "type": "doc",
+      "duration": "15 min",
+      "isCompleted": false,
+      "contentMarkdown": "# FIRJAN IMPACTA AI • Programa de Inovação Interna\n\nO subprograma FIRJAN Impacta incentiva o pensamento crítico e a colaboração para gerar inovação operacional.\n\n### Estrutura Base para Sugestões:\n* **Identificação de Gargalos:** Detalhe o problema específico com dados reais de tempo ou custo.\n* **Solução Prática:** Proposta pragmática, viável, reduzindo etapas desnecessárias.\n* **Impacto Operacional:** Demonstre o ganho de eficiência, produtividade ou economia financeira esperada.\n\nAproveite a inteligência artificial da plataforma para analisar e aperfeiçoar sua sugestão antes de submeter à avaliação setorial!"
+    },
+    {
+      "id": "step_5",
+      "title": "Treinamento de Integração com a Cultura Organizacional",
+      "category": "Institucional",
+      "type": "video",
+      "duration": "30 min",
+      "isCompleted": false,
+      "contentMarkdown": "# Integração com a Cultura Organizacional da Firjan\n\nA cultura do ecossistema Firjan une o desenvolvimento econômico do Rio de Janeiro com a qualidade de vida do trabalhador corporativo.\n\n### Valores Centrais:\n* **Compromisso com o Futuro:** Auxiliar as indústrias fluminenses na transição tecnológica.\n* **Érica & Transparência:** Atuar em total conformidade com regras estaduais e federais.\n* **Valorização das Pessoas:** Fomentar a educação profissional continuada e o bem-estar por meio do SESI Saúde."
+    }
+  ],
+  "wiki": [
+    {
+      "id": "wiki_1",
+      "title": "Manual de Identidade Visual Corporativa (Firjan, SESI, SENAI)",
+      "content": "Este manual detalha a aplicação correta dos logotipos e fontes institucionais nas unidades do SENAI e SESI por todo o Estado do Rio de Janeiro. Recomenda o uso das cores heráldicas azuis e as regras de convivência de marca. Links para download de templates estão anexados na Intranet Firjan.",
+      "category": "Institucional",
+      "tags": [
+        "Design",
+        "Branding",
+        "Manual"
+      ],
+      "favoritesCount": 14,
+      "excerpt": "Manual oficial de uso das marcas Firjan, SESI e SENAI para comunicados e vestimentas.",
+      "createdAt": "2026-02-12T14:00:00Z"
+    },
+    {
+      "id": "wiki_2",
+      "title": "Política de Viagens e Reembolsos Corporativos",
+      "content": "Regras para ressarcimento de deslocamentos, diárias, passagens aéreas e quilometragem ao prestar serviços móveis SENAI ou visitar unidades regionais. Os relatórios devem ser submetidos no sistema SAP corporativo até o dia 25 de cada mês, acompanhados de notas fiscais válidas com o CNPJ adequado da regional.",
+      "category": "Processos",
+      "tags": [
+        "Reembolso",
+        "Financeiro",
+        "Viagem"
+      ],
+      "favoritesCount": 28,
+      "excerpt": "Diretrizes de conformidade financeira para visitas corporativas e despesas operacionais.",
+      "createdAt": "2026-03-01T09:30:00Z"
+    },
+    {
+      "id": "wiki_3",
+      "title": "Processo Seletivo do SENAI para Cursos Gratuitos",
+      "content": "Instruções operacionais para o credenciamento de bolsas de estudos no SENAI. Descreve como as secretarias acadêmicas organizam a triagem socioeconômica de candidatos das turmas do SENAI Firjan de todo o Rio de Janeiro de acordo com a regulamentação do Conselho Nacional.",
+      "category": "Educação",
+      "tags": [
+        "SENAI",
+        "Aulas",
+        "Bolsas"
+      ],
+      "favoritesCount": 35,
+      "excerpt": "Fluxograma operacional de ingresso social para turmas profissionalizantes.",
+      "createdAt": "2026-04-10T11:15:00Z"
+    },
+    {
+      "id": "wiki_4",
+      "title": "Procedimento para Submissão de Patentes Industriais",
+      "content": "Fluxo para inventores no âmbito de pesquisas do SENAI CETIQT ou do Instituto SENAI de Tecnologia. Compreende a realização de pesquisas de anterioridade com auxílio de IA, elaboração de relatórios descritivos, preenchimento de formulários do INPI e suporte de consultoria jurídica especializada da Firjan.",
+      "category": "Tecnologia",
+      "tags": [
+        "Patente",
+        "Inovação",
+        "SENAI CETIQT"
+      ],
+      "favoritesCount": 19,
+      "excerpt": "Passo a passo legal e técnico para proteção de propriedade intelectual industrial.",
+      "createdAt": "2026-05-02T16:45:00Z"
+    }
+  ],
+  "ideas": [
+    {
+      "id": "idea_1",
+      "title": "Roteirização Inteligente de Equipes de Saúde SESI RJ",
+      "description": "Roteirizar com auxílio de inteligência computacional os ônibus de atendimento médico do SESI Rio que viajam por municípios fluminenses prestando exames preventivos de saúde ocupacional.",
+      "problem": "Os custos de combustível das unidades de saúde móvel do SESI estão flutuando com sobreposição de rotas. Equipes de manutenção às vezes cruzam as mesmas cidades no mesmo dia sem consolidação logística.",
+      "solution": "Implementar um resolvedor matemático de rotas de frota (Vehicle Routing Problem) que integra o calendário de exames preventivos corporativos com a geografia de deslocamento das equipes médicas fluminenses.",
+      "impactExpected": "Economia direta de combustível, maior agilidade no atendimento e redução de 20% no desgaste dos veículos de saúde.",
+      "category": "Eficiência Operacional",
+      "authorId": "user_marcos",
+      "authorName": "Marcos de Souza Silva",
+      "authorDept": "Suporte Operacional e Produção",
+      "status": "Em implementação",
+      "likes": 18,
+      "likedBy": [
+        "user_camila",
+        "user_roberto"
+      ],
+      "comments": [
+        {
+          "id": "c1",
+          "authorName": "Camila Santos de Oliveira",
+          "text": "Excelente iniciativa, Marcos! Já temos conexões de telemetria que podem acelerar a alimentação dos dados.",
+          "createdAt": "2026-05-20T10:00:05Z"
+        }
+      ],
+      "pointsRewarded": 100,
+      "aiReview": {
+        "summary": "Esta ideia foca na otimização logística das frotas de saúde móvel do SESI através de roteirização georreferenciada.",
+        "estimatedImpact": "Alto potencial de eficiência logística, consolidando rotas geográficas intermunicipais.",
+        "suggestions": [
+          "Integrar com as agendas regionais da Firjan para alinhar visitas na mesma microrregião.",
+          "Considerar o tempo de deslocamento com margem para tráfego nas rodovias estaduais fluminenses.",
+          "Desenvolver um piloto visual com 3 unidades móveis antes de expandir para toda a frota do Rio."
+        ],
+        "isDuplicate": false,
+        "priority": "Alta",
+        "operationalSaving": "R$ 140.000/ano"
+      },
+      "createdAt": "2026-05-19T08:30:00Z",
+      "approvalHistory": [
+        {
+          "stageId": 0,
+          "approver": "Marcos de Souza Silva",
+          "role": "Colaborador",
+          "date": "19/05/2026",
+          "action": "submitted",
+          "comment": "Roteirização integrada georreferenciada de frotas médicas."
+        },
+        {
+          "stageId": 1,
+          "approver": "Camila Santos de Oliveira",
+          "role": "Líder/Gestor",
+          "date": "20/05/2026",
+          "action": "approved",
+          "comment": "Excelente viabilidade operacional. Alinhado com as frotas regionais."
+        },
+        {
+          "stageId": 2,
+          "approver": "Roberto Azevedo Menezes",
+          "role": "Comissão Avaliadora",
+          "date": "21/05/2026",
+          "action": "approved",
+          "comment": "Viabilidade técnica e financeira confirmada. ROI robusto em médio prazo."
+        },
+        {
+          "stageId": 3,
+          "approver": "Super Admin Firjan",
+          "role": "Super Admin",
+          "date": "23/05/2026",
+          "action": "approved",
+          "comment": "Aprovado para início em execução imediata pela presidência."
+        }
+      ],
+      "currentStage": 4
+    },
+    {
+      "id": "idea_2",
+      "title": "Desburocratização de Matrícula no SENAI via Processo de Assinatura Digital",
+      "description": "Substituir a entrega e assinatura manual de termos acadêmicos físicos por links SMS/E-mail com criptografia e validador biométrico nacional.",
+      "problem": "As secretarias das escolas SENAI enfrentam imensas filas no início do semestre letivo. O consumo de papel e energia é alto e os termos físicos são suscetíveis a perdas.",
+      "solution": "Digitalização completa com formulários mobile-friendly. O aluno recebe o contrato via celular e assina digitalmente através de identificação biométrica facial integrada à base governamental.",
+      "impactExpected": "Eliminação completa de papel de admissão, redução de 80% no tempo médio das secretarias acadêmicas fluminenses.",
+      "category": "Eficiência Operacional",
+      "authorId": "user_jessica",
+      "authorName": "Jéssica Lima da Silva",
+      "authorDept": "Recursos Humanos & Desenvolvimento",
+      "status": "Aprovado",
+      "likes": 24,
+      "likedBy": [
+        "user_marcos",
+        "user_roberto",
+        "user_camila"
+      ],
+      "comments": [],
+      "pointsRewarded": 150,
+      "aiReview": {
+        "summary": "Migração ágil de matrículas físicas presenciais do SENAI para modelo de assinatura digital criptografado.",
+        "estimatedImpact": "Redução astronômica de filas e de custos de insumos administrativos (papel/impressão).",
+        "suggestions": [
+          "Iniciar o projeto no campus SENAI Maracanã por contar com maior volume operacional de suporte letivo.",
+          "Assegurar conformidade jurídica rígida de acordo com a lei federal de assinaturas eletrônicas.",
+          "Oferecer quiosque de autoatendimento digital nas regionais para alunos que não dispõem de smartphone."
+        ],
+        "isDuplicate": false,
+        "priority": "Alta",
+        "operationalSaving": "R$ 380.000/ano"
+      },
+      "createdAt": "2026-05-21T11:45:00Z",
+      "approvalHistory": [
+        {
+          "stageId": 0,
+          "approver": "Jéssica Lima da Silva",
+          "role": "Colaborador",
+          "date": "21/05/2026",
+          "action": "submitted",
+          "comment": "Desburocratização de matrículas via assinatura biométrica."
+        },
+        {
+          "stageId": 1,
+          "approver": "Camila Santos de Oliveira",
+          "role": "Líder/Gestor",
+          "date": "22/05/2026",
+          "action": "approved",
+          "comment": "Aprovado. Eliminará filas intensas das secretarias."
+        },
+        {
+          "stageId": 2,
+          "approver": "Roberto Azevedo Menezes",
+          "role": "Comissão Avaliadora",
+          "date": "22/05/2026",
+          "action": "approved",
+          "comment": "Perfeita conformidade com regras regulatórias e LGPD."
+        },
+        {
+          "stageId": 3,
+          "approver": "Super Admin Firjan",
+          "role": "Super Admin",
+          "date": "23/05/2026",
+          "action": "approved",
+          "comment": "Sancionado com orçamento administrativo."
+        }
+      ],
+      "currentStage": 4
+    },
+    {
+      "id": "idea_3",
+      "title": "Gamificação Ecológica nas Cantinas Compartilhadas SESI",
+      "description": "Campanha integrada por aplicativo para premiar alunos e colaboradores Firjan que evitam o descarte desnecessário de copos descartáveis e bandejas de refeitório.",
+      "problem": "O desperdício nas cantinas ainda é expressivo, e o descarte de materiais recicláveis misturados reduz o indicador de sustentabilidade da FIRJAN.",
+      "solution": "Inserir QR Codes colecionáveis para alunos que trazem suas próprias canecas. Cada verificação reverte em moedas digitais corporativas trocáveis por descontos em cursos SENAI ou brindes SESI.",
+      "impactExpected": "Engajamento comunitário jovem, redução de resíduos plásticos em 45% nas unidades selecionadas.",
+      "category": "Sustentabilidade",
+      "authorId": "user_marcos",
+      "authorName": "Marcos de Souza Silva",
+      "authorDept": "Suporte Operacional e Produção",
+      "status": "Em análise",
+      "likes": 7,
+      "likedBy": [],
+      "comments": [],
+      "pointsRewarded": 0,
+      "createdAt": "2026-05-22T15:20:00Z",
+      "approvalHistory": [
+        {
+          "stageId": 0,
+          "approver": "Marcos de Souza Silva",
+          "role": "Colaborador",
+          "date": "22/05/2026",
+          "action": "submitted",
+          "comment": "Moedas virtuais ecológicas para alunos da regional."
+        },
+        {
+          "stageId": 1,
+          "approver": null,
+          "role": "Líder/Gestor",
+          "date": null,
+          "action": "pending",
+          "comment": null
+        },
+        {
+          "stageId": 2,
+          "approver": null,
+          "role": "Comissão Avaliadora",
+          "date": null,
+          "action": "pending",
+          "comment": null
+        },
+        {
+          "stageId": 3,
+          "approver": null,
+          "role": "Administrador",
+          "date": null,
+          "action": "pending",
+          "comment": null
+        }
+      ],
+      "currentStage": 1
+    },
+    {
+      "id": "idea_4",
+      "title": "Prontuário Integrado e Telemedicina para SESI RJ",
+      "description": "Implementar uma plataforma integrada de prontuário digital e telessaúde com inteligência artificial para agilizar os exames de saúde ocupacional dos industriários fluminenses.",
+      "problem": "O tempo de espera para agendamento e emissão de laudos de exames ocupacionais nas clínicas físicas do SESI gera ociosidade nas empresas parceiras.",
+      "solution": "Criar um canal integrado de telemedicina preventiva sob demanda, permitindo pré-triagem virtual via aplicativo Firjan Connect.",
+      "impactExpected": "Redução de 40% no absenteísmo de exames, diagnósticos rápidos e fomento ao bem-estar do trabalhador.",
+      "category": "Saúde e SESI",
+      "authorId": "user_camila",
+      "authorName": "Camila Santos de Oliveira",
+      "authorDept": "Inovação, TI e Transformação Digital",
+      "status": "Aprovado",
+      "likes": 12,
+      "likedBy": [
+        "user_marcos",
+        "user_roberto"
+      ],
+      "comments": [],
+      "pointsRewarded": 150,
+      "aiReview": {
+        "summary": "Implementação de telessaúde e prontuário ocupacional inteligente para aumento da produtividade médica do SESI.",
+        "estimatedImpact": "Forte conformidade e otimização de tempo de exames de funcionários fluminenses.",
+        "suggestions": [
+          "Piloto inicial focado na unidade SESI de Duque de Caxias.",
+          "Verificar compatibilidade com regulamentos do CFM."
+        ],
+        "isDuplicate": false,
+        "priority": "Alta",
+        "operationalSaving": "R$ 220.000/ano"
+      },
+      "createdAt": "2026-05-23T14:10:00Z",
+      "approvalHistory": [
+        {
+          "stageId": 0,
+          "approver": "Camila Santos de Oliveira",
+          "role": "Colaborador",
+          "date": "23/05/2026",
+          "action": "submitted",
+          "comment": "Prontuário eletrônico ocupacional centralizado."
+        }
+      ],
+      "currentStage": 4
+    },
+    {
+      "id": "idea_5",
+      "title": "Observatório Digital de Talentos e Analytics do IEL RJ",
+      "description": "Criar uma plataforma inteligente baseada em inteligência preditiva para identificar tendências de mercado e habilidades industriais procuradas no Rio de Janeiro.",
+      "problem": "Falta de conexão ágil em tempo real entre a formação acadêmica do SENAI e as vagas executivas demandadas pelas indústrias associadas ao IEL.",
+      "solution": "Um cockpit unificado para análise preditiva de recrutamento e mapeamento estatístico de vagas da Firjan.",
+      "impactExpected": "Aumento do índice de empregabilidade dos egressos, conexão direta com vagas de estágio e inteligência para novas turmas.",
+      "category": "Gestão Administrativa",
+      "authorId": "user_roberto",
+      "authorName": "Roberto Azevedo Menezes",
+      "authorDept": "Planejamento Estratégico",
+      "status": "Aprovado",
+      "likes": 9,
+      "likedBy": [
+        "user_marcos",
+        "user_camila"
+      ],
+      "comments": [],
+      "pointsRewarded": 150,
+      "aiReview": {
+        "summary": "Plataforma preditiva IEL de mercado de trabalho e matching inteligente de estagiários fluminenses.",
+        "estimatedImpact": "Estratégico para empregabilidade industrial de nível do Estado do Rio de Janeiro.",
+        "suggestions": [
+          "Sincronizar com as demandas corporativas de frotas e indústrias em Volta Redonda."
+        ],
+        "isDuplicate": false,
+        "priority": "Alta",
+        "operationalSaving": "R$ 180.000/ano"
+      },
+      "createdAt": "2026-05-24T09:15:00Z",
+      "approvalHistory": [
+        {
+          "stageId": 0,
+          "approver": "Roberto Azevedo Menezes",
+          "role": "Colaborador",
+          "date": "24/05/2026",
+          "action": "submitted",
+          "comment": "Matching preditivo de carreiras do IEL."
+        }
+      ],
+      "currentStage": 4
+    }
+  ],
+  "insights": [
+    {
+      "id": "insight_1",
+      "type": "retrabalho",
+      "title": "Duplicidade de Relacionamento de CRM Regional",
+      "description": "Identificamos que consultores regionais SESI e promotores do SENAI estão visitando as mesmas indústrias fluminenses de médio porte em intervalos menores de 48 horas, sem compartilhamento prévio da agenda comercial de propostas.",
+      "impact": "Sobrecarga de e-mails para o empresário parceiro e fadiga comercial, reduzindo a taxa de conversão final de matrículas corporativas em 12%.",
+      "recommendation": "Sincronizar feeds de prospecção do SESI e do SENAI no mesmo funil unificado regionalizado.",
+      "area": "Relações Industriais & Mercado",
+      "detectedAt": "2026-05-21T18:00:00Z",
+      "status": "Pendente"
+    },
+    {
+      "id": "insight_2",
+      "type": "processo lento",
+      "title": "Prazos Extensos em Homologação de Fornecedores SENAI rj",
+      "description": "A validação fiscal de fornecedores de laboratórios técnicos do SENAI está levando em média 22 dias corridos devido ao acréscimo de aprovações desnecessárias por dependências hierárquicas.",
+      "impact": "Atrasos em entregas de peças de torno mecânico CNC, impactando cronogramas de turmas operacionais SENAI Firjan.",
+      "recommendation": "IA de triagem rápida para checar certidões negativas automaticamente, delegando a assinatura física manual apenas a casos de alerta tributário.",
+      "area": "Finanças e Suprimentos",
+      "detectedAt": "2026-05-22T09:00:00Z",
+      "status": "Analisando"
+    },
+    {
+      "id": "insight_3",
+      "type": "gargalo",
+      "title": "Triagem de Dúvidas na Ouvidoria SESI e SENAI",
+      "description": "Cerca de 42% das mensagens dos canais de suporte tratam de perguntas de curtíssimo teor como calendário escolar e links de boletos que poderiam ser resolvidos em autoatendimento.",
+      "impact": "Estagnação de demandas cruciais de denúncias ou propostas comerciais.",
+      "recommendation": "Fortalecer a busca Firjan Connect IA e fixar links rápidos na área de canais de alunos.",
+      "area": "Atendimento do Aluno e Secretaria",
+      "detectedAt": "2026-05-23T10:30:00Z",
+      "status": "Analisando"
+    },
+    {
+      "id": "insight_1780331800064",
+      "type": "gargalo",
+      "title": "Logout de Sessão",
+      "description": "Usuário solicitou encerrou a sessão conectada.",
+      "area": "Geral",
+      "detectedAt": "2026-06-01T16:36:40.064Z",
+      "status": "Pendente"
+    },
+    {
+      "id": "insight_1780331804700",
+      "type": "gargalo",
+      "title": "Logout de Sessão",
+      "description": "Usuário solicitou encerrou a sessão conectada.",
+      "area": "Geral",
+      "detectedAt": "2026-06-01T16:36:44.700Z",
+      "status": "Pendente"
+    },
+    {
+      "id": "insight_1780331809067",
+      "type": "gargalo",
+      "title": "Logout de Sessão",
+      "description": "Usuário solicitou encerrou a sessão conectada.",
+      "area": "Geral",
+      "detectedAt": "2026-06-01T16:36:49.067Z",
+      "status": "Pendente"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log_1",
+      "timestamp": "2026-05-23T22:30:00Z",
+      "userId": "user_marcos",
+      "userName": "Marcos de Souza Silva",
+      "action": "Criação de Ideia",
+      "details": "Visualizou e registrou rascunho de nova ideia sustentável para cantina.",
+      "ip": "10.150.2.14"
+    },
+    {
+      "id": "log_2",
+      "timestamp": "2026-05-23T22:45:00Z",
+      "userId": "user_camila",
+      "userName": "Camila Santos de Oliveira",
+      "action": "Avaliação de Ideia",
+      "details": "Aprovou a Roteirização de Equipe SESI para fase de implementação.",
+      "ip": "10.150.8.210"
+    },
+    {
+      "id": "log_3",
+      "timestamp": "2026-05-23T22:50:00Z",
+      "userId": "user_admin",
+      "userName": "Super Admin Firjan",
+      "action": "Configurações do Sistema",
+      "details": "Atualizou chaves de permissão do comitê de comissão avaliadora.",
+      "ip": "10.15.5.99"
+    },
+    {
+      "id": "log_1780330993303_d4kct",
+      "timestamp": "2026-06-01T16:23:13.303Z",
+      "userId": "user_1780330993303",
+      "userName": "Mmvsilva",
+      "action": "Autoregistro OAuth",
+      "details": "Novo usuário cadastrado automaticamente com domínio @firjan.com.br (fallback local)",
+      "ip": "10.150.12.171"
+    },
+    {
+      "id": "log_1780331800065_gcvsj",
+      "timestamp": "2026-06-01T16:36:40.065Z",
+      "userId": "user_1780330993303",
+      "userName": "Mmvsilva",
+      "action": "Detecção de Gargalo",
+      "details": "IA/Analista registrou alerta operacional: \"Logout de Sessão\" (local)",
+      "ip": "10.150.155.237"
+    },
+    {
+      "id": "log_1780331804700_opyq2",
+      "timestamp": "2026-06-01T16:36:44.700Z",
+      "userId": "user_1780330993303",
+      "userName": "Mmvsilva",
+      "action": "Detecção de Gargalo",
+      "details": "IA/Analista registrou alerta operacional: \"Logout de Sessão\" (local)",
+      "ip": "10.150.66.145"
+    },
+    {
+      "id": "log_1780331809067_s4ls6",
+      "timestamp": "2026-06-01T16:36:49.067Z",
+      "userId": "user_1780330993303",
+      "userName": "Mmvsilva",
+      "action": "Detecção de Gargalo",
+      "details": "IA/Analista registrou alerta operacional: \"Logout de Sessão\" (local)",
+      "ip": "10.150.73.184"
+    },
+    {
+      "id": "log_1780334301763_pq0l4",
+      "timestamp": "2026-06-01T17:18:21.763Z",
+      "userId": "user_1780330993303",
+      "userName": "Mmvsilva",
+      "action": "Login de Usuário",
+      "details": "Logado com sucesso via credenciais AD registradas",
+      "ip": "10.150.119.8"
+    }
+  ]
+}

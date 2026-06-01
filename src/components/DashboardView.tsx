@@ -89,12 +89,23 @@ export default function DashboardView({
   };
 
   ideas.forEach(i => {
-    const dept = i.authorDept;
-    if (dept.toLowerCase().includes('sesi')) deptCount['SESI RJ']++;
-    else if (dept.toLowerCase().includes('senai') || dept.toLowerCase().includes('produção')) deptCount['SENAI RJ']++;
-    else if (dept.toLowerCase().includes('iel')) deptCount['IEL RJ']++;
-    else if (dept.toLowerCase().includes('recurso') || dept.toLowerCase().includes('humanos')) deptCount['Recursos Humanos']++;
-    else deptCount['Suporte e TI']++;
+    const author = users.find(u => u.id === i.authorId);
+    const sector = (author?.setor || '').toLowerCase();
+    const dept = (i.authorDept || author?.department || '').toLowerCase();
+    const title = (i.title || '').toLowerCase();
+    const desc = (i.description || '').toLowerCase();
+
+    if (sector.includes('sesi') || dept.includes('sesi') || title.includes('sesi') || desc.includes('sesi')) {
+      deptCount['SESI RJ']++;
+    } else if (sector.includes('senai') || dept.includes('senai') || dept.includes('produção') || title.includes('senai') || desc.includes('senai')) {
+      deptCount['SENAI RJ']++;
+    } else if (sector.includes('iel') || dept.includes('iel') || title.includes('iel') || desc.includes('iel')) {
+      deptCount['IEL RJ']++;
+    } else if (dept.includes('recurso') || dept.includes('humanos')) {
+      deptCount['Recursos Humanos']++;
+    } else {
+      deptCount['Suporte e TI']++;
+    }
   });
 
   // Ranking of collaborators with more rich gamification details (count of contributions)
@@ -108,6 +119,8 @@ export default function DashboardView({
   const [selectedUnitId, setSelectedUnitId] = useState<string>('sede_botafogo');
   const [searchUnitQuery, setSearchUnitQuery] = useState<string>('');
   const [filterUnitType, setFilterUnitType] = useState<string>('all');
+  const [tableRegion, setTableRegion] = useState<string>('all');
+  const [tableSearch, setTableSearch] = useState<string>('');
 
   // State for simulated collaborators list and rankings
   const [selectedColabId, setSelectedColabId] = useState<string>('');
@@ -165,7 +178,7 @@ export default function DashboardView({
       address: 'Rua Pinheiro Machado, 256 - Laranjeiras, Rio de Janeiro - RJ, 22211-110',
       phone: '(21) 2563-5000',
       workingHours: '09:00 às 21:00 (Seg a Sex)',
-      description: 'Pólo cultural e de fomento artístico SESI RJ. Atendimento focado em fomento social, peças de teatro e ginástica laboral corporativa.',
+      description: 'Pólo cultural e de fomento artisticos SESI RJ. Atendimento focado em fomento social, peças de teatro e ginástica laboral corporativa.',
       services: ['Teatro SESI Laranjeiras', 'Oficinas de Criação de Áudio', 'Apoio de Bem-estar', 'Salas de Reunião'],
       mapsQuery: 'Firjan+SESI+Laranjeiras+Rua+Pinheiro+Machado'
     },
@@ -212,8 +225,328 @@ export default function DashboardView({
       description: 'Unidade metropolitana focada na Indústria Criativa, Manutenção de Equipamentos Navais de Fretamento e Engenharia Mecânica de fomento.',
       services: ['Fomento de Soldagem Naval', 'Apoio de Segurança do Trabalho', 'Estudos de Economia do Mar', 'Cursos IEL Rio Leste'],
       mapsQuery: 'Firjan+Niteroi+Rua+General+Castrioto'
+    },
+    {
+      id: 'senai_volta_redonda',
+      name: 'Firjan SENAI Volta Redonda',
+      type: 'SENAI',
+      address: 'Rua Pedro Lima, 130 - Niterói, Volta Redonda - RJ, 27283-370',
+      phone: '(24) 3340-5550',
+      workingHours: '07:30 às 22:00 (Seg a Sáb)',
+      description: 'Centro tecnológico metalomecânico de Volta Redonda, focado em Siderurgia tradicional, Automação Industrial CLP de ponta e Soldagem profissional.',
+      services: ['Ensaios Técnicos Metallurgicos', 'Labs Soldagem e Caldeiraria', 'Automação CLP e Robótica', 'Treinamentos de NR Industriais'],
+      mapsQuery: 'Firjan+SENAI+Volta+Redonda+Rua+Pedro+Lima+130'
+    },
+    {
+      id: 'sesi_volta_redonda',
+      name: 'Firjan SESI Volta Redonda',
+      type: 'SESI',
+      address: 'Av. Lucas Evangelista de Oliveira Figueireira, 1600 - Aterrado, Volta Redonda - RJ, 27215-000',
+      phone: '(24) 3344-9750',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Estrutura integrada de saúde ocupacional, esporte, educação básica e bem-estar do trabalhador na região do Médio Paraíba.',
+      services: ['Medicina Ocupacional Preventiva', 'Academia e Ginásio Poliesportivo', 'Escola Educação Básica SESI', 'Odontologia e Vacinação'],
+      mapsQuery: 'Firjan+SESI+Volta+Redonda+Avenida+Lucas+Evangelista+Oliveira'
+    },
+    {
+      id: 'senai_barra_mansa',
+      name: 'Firjan SENAI Barra Mansa',
+      type: 'SENAI',
+      address: 'Rua São Sebastião, 1720 - Centro, Barra Mansa - RJ, 27310-022',
+      phone: '(24) 3328-1350',
+      workingHours: '08:00 às 21:30 (Seg a Sex)',
+      description: 'Unidade capacitadora para o desenvolvimento metalúrgico regional, mecânica de fomento e soluções industriais práticas.',
+      services: ['Manutenção Mecânica Geral', 'Panificação e Alimentos', 'AutoCAD Integrado', 'Apoio de Patentes'],
+      mapsQuery: 'Firjan+SENAI+Barra+Mansa+Rua+Sao+Sebastiao'
+    },
+    {
+      id: 'senai_campos',
+      name: 'Firjan SENAI Campos dos Goytacazes',
+      type: 'SENAI',
+      address: 'Rua Dr. Lacerda Sobrinho, 220 - Centro, Campos dos Goytacazes - RJ, 28010-076',
+      phone: '(22) 2739-1600',
+      workingHours: '08:00 às 22:00 (Seg a Sáb)',
+      description: 'Desenvolvimento industrial focado na bacia petrolífera e açúcar e álcool no Norte Fluminense.',
+      services: ['Instrumentação Industrial', 'Eletrônica e Automação', 'Laboratório Petroquímico', 'Formação Continuada'],
+      mapsQuery: 'Firjan+SENAI+Campos+Dr+Lacerda+Sobrinho'
+    },
+    {
+      id: 'senai_macae',
+      name: 'Firjan SENAI Macaé',
+      type: 'SENAI',
+      address: 'Estrada Imburo, s/n - Imburo, Macaé - RJ, 27913-970',
+      phone: '(22) 2791-9250',
+      workingHours: '07:30 às 22:00 (Seg a Sáb)',
+      description: 'Unidade estratégica offshore. Centrada na cadeia petrolífera profunda, normas de segurança de frotas e refinaria.',
+      services: ['Operações Onshore/Offshore', 'Hidráulica de Precisão', 'Soldagem em Alta Pressão', 'Segurança Marítima'],
+      mapsQuery: 'Firjan+SENAI+Macae+Estrada+Imburo'
+    },
+    {
+      id: 'senai_petropolis',
+      name: 'Firjan SENAI Petrópolis',
+      type: 'SENAI',
+      address: 'Rua Bingen, 130 - Bingen, Petrópolis - RJ, 25660-004',
+      phone: '(24) 2244-3200',
+      workingHours: '08:00 às 22:00 (Seg a Sex)',
+      description: 'Escola de tecnologia focada na Região Serrana com fomento de softwares, eletrotécnica e inovação têxtil.',
+      services: ['Fomento de Software', 'Análise de Redes Informáticas', 'Painéis de Eficiência Energética', 'Moda Têxtil'],
+      mapsQuery: 'Firjan+SENAI+Petropolis+Rua+Bingen'
+    },
+    {
+      id: 'senai_friburgo',
+      name: 'Firjan SENAI Nova Friburgo',
+      type: 'SENAI',
+      address: 'Rua Ernesto Brasílio, 74 - Centro, Nova Friburgo - RJ, 28610-120',
+      phone: '(22) 2525-6300',
+      workingHours: '08:00 às 21:00 (Seg a Sex)',
+      description: 'Focado em Moda Íntima e Metalomecânica leve na Região Serrana.',
+      services: ['Laboratórios Têxteis Integrados', 'Oficinas Costura Industrial', 'Metrologia Dimensional', 'Usinagem de Moldes'],
+      mapsQuery: 'Firjan+SENAI+Nova+Friburgo+Rua+Ernesto+Brasilio'
+    },
+    {
+      id: 'senai_itaperuna',
+      name: 'Firjan SENAI Itaperuna',
+      type: 'SENAI',
+      address: 'Av. Deputado José de Cerqueira Garcia, s/n - Bairro Aeroporto, Itaperuna - RJ, 28300-000',
+      phone: '(22) 3811-2100',
+      workingHours: '08:00 às 21:30 (Seg a Sex)',
+      description: 'Atendimento do Noroeste Fluminense no suporte à agroindústria e fomento do vestuário regional.',
+      services: ['Design de Calçados', 'Manutenção Agroindustrial', 'Logística de Abastecimento', 'Informática Comercial'],
+      mapsQuery: 'Firjan+SENAI+Itaperuna+Bairro+Aeroporto'
+    },
+    {
+      id: 'senai_cabo_frio',
+      name: 'Firjan SENAI Cabo Frio',
+      type: 'SENAI',
+      address: 'Estrada de Nelore, s/n - Novo Portinho, Cabo Frio - RJ, 28912-320',
+      phone: '(22) 2641-7200',
+      workingHours: '08:00 às 22:00 (Seg a Sex)',
+      description: 'Focado no desenvolvimento do comércio marinho, manutenção mecânica náutica e fomento turístico da Região dos Lagos.',
+      services: ['Instalações de Telecomunicação', 'Motores Náuticos', 'Refrigeração Comercial', 'Usinagem CNC de Alumínio'],
+      mapsQuery: 'Firjan+SENAI+Cabo+Frio+Novo+Portinho'
+    },
+    {
+      id: 'senai_tres_rios',
+      name: 'Firjan SENAI Três Rios',
+      type: 'SENAI',
+      address: 'Av. Prefeito Alberto da Silva Lavinas, 1847 - Centro, Três Rios - RJ, 25802-100',
+      phone: '(24) 2251-9500',
+      workingHours: '08:00 às 22:00 (Seg a Sex)',
+      description: 'Pólo regional de transportes logísticos e mecânica pesada rodoviária.',
+      services: ['Logística Integrada', 'Eletromecânica Frota', 'Qualificação Logística', 'NR12 Máquinas Máquinas'],
+      mapsQuery: 'Firjan+SENAI+Tres+Rios+Alberto+Silva+Lavinas'
+    },
+    {
+      id: 'senai_santa_cruz',
+      name: 'Firjan SENAI Santa Cruz',
+      type: 'SENAI',
+      address: 'Rua do Império, 500 - Santa Cruz, Rio de Janeiro - RJ, 23515-160',
+      phone: '(21) 3331-5221',
+      workingHours: '07:30 às 22:00 (Seg a Sáb)',
+      description: 'Unidade que atende o maciço industrial da Zona Oeste Carioca na área portuária e siderúrgica moderna.',
+      services: ['Instalações Siderúrgicas', 'CLP e Dispositivos Industriais', 'Labs Químicos Focados', 'Segurança Patrimonial'],
+      mapsQuery: 'Firjan+SENAI+Santa+Cruz+Rua+do+Imperio'
+    },
+    {
+      id: 'senai_benfica',
+      name: 'Firjan SENAI Benfica',
+      type: 'SENAI',
+      address: 'Praça Assunção, 115 - Benfica, Rio de Janeiro - RJ, 20961-020',
+      phone: '(21) 3891-2300',
+      workingHours: '07:00 às 22:00 (Seg a Sáb)',
+      description: 'Unidade central e sede técnica dos Institutos SENAI de Tecnologia em Soldagem e Automação Industrial do RJ.',
+      services: ['Homologação de Soldadores', 'Simulação Dinâmica Avançada', 'Impressão 3D e Prototipagem', 'Projetos PDI Certificados'],
+      mapsQuery: 'Firjan+SENAI+Benfica+Praca+Assuncao'
+    },
+    {
+      id: 'senai_sao_goncalo',
+      name: 'Firjan SENAI São Gonçalo',
+      type: 'SENAI',
+      address: 'Rua Dr. Nilo Peçanha, 134 - Centro, São Gonçalo - RJ, 24440-410',
+      phone: '(21) 3706-1300',
+      workingHours: '08:00 às 22:00 (Seg a Sab)',
+      description: 'Polo técnico de São Gonçalo voltado à metalúrgica e serviços de instalações prediais e fomento de edificações.',
+      services: ['Desenho Técnico Industrial', 'Eletricidade Predial Comercial', 'Usinagem Pesada e Fresagem', 'Pintura Técnica Estofamento'],
+      mapsQuery: 'Firjan+SENAI+Sao+Goncalo+Nilo+Pecanha'
+    },
+    {
+      id: 'senai_teresopolis',
+      name: 'Firjan SENAI Teresópolis',
+      type: 'SENAI',
+      address: 'Rua Jorge Lóssio, 1205 - Alto, Teresópolis - RJ, 25960-030',
+      phone: '(24) 2641-7500',
+      workingHours: '08:00 às 21:00 (Seg a Sex)',
+      description: 'Unidade focada no fomento tecnológico de panificação profissional de alta qualidade, confeitaria e soluções de TI locais.',
+      services: ['Panificação Artesanal Industrial', 'TI e Redes de fibra óptica', 'Suporte a Empreendedores Digitais', 'Manutenção Predial'],
+      mapsQuery: 'Firjan+SENAI+Teresopolis+Rua+Jorge+Lossio'
+    },
+    {
+      id: 'senai_angra',
+      name: 'Firjan SENAI Angra dos Reis',
+      type: 'SENAI',
+      address: 'Av. Almirante Júlio César de Noronha, s/n - Centro, Angra dos Reis - RJ, 23900-500',
+      phone: '(24) 3365-1440',
+      workingHours: '08:00 às 21:30 (Seg a Sex)',
+      description: 'Fomento da Engenharia Pesada Naval de Angra dos Reis com laboratórios integrados de Metalurgia de Alta Pressão e Soldagem em Estaleiros.',
+      services: ['Soldagem Naval Reconhecida', 'Inspeção Dutos Ultrassom', 'Hidráulica de Bombas e Turbinas', 'Pintura Naval Especializada'],
+      mapsQuery: 'Firjan+SENAI+Angra+dos+Reis+Centro'
+    },
+    {
+      id: 'senai_padua',
+      name: 'Firjan SENAI Santo Antônio de Pádua',
+      type: 'SENAI',
+      address: 'Rua Dr. Temístocles de Almeida, 15 - Centro, Santo Antônio de Pádua - RJ, 28470-000',
+      phone: '(22) 3851-2400',
+      workingHours: '13:00 às 22:00 (Seg a Sex)',
+      description: 'Polo minerais da região noroeste, focado em ensaios de gesso, rochas e consultoria de fomento mineral.',
+      services: ['Ensaios Resistência Rochas', 'Tecnologia Extração Mineral', 'Manutenção Máquinas Pesadas', 'Ergonomia Operacional'],
+      mapsQuery: 'Firjan+SENAI+Santo+Antonio+de+Padua'
+    },
+    {
+      id: 'senai_vassouras',
+      name: 'Firjan SENAI Vassouras',
+      type: 'SENAI',
+      address: 'Rua Nilo Peçanha, 85 - Centro, Vassouras - RJ, 27700-000',
+      phone: '(24) 2471-1220',
+      workingHours: '13:00 às 22:00 (Seg a Sex)',
+      description: 'Centro de Tecnologia e Eletrotécnica focado nas indústrias agroquímicas e fomento à inovação de logística.',
+      services: ['Análise Eficiência Energia', 'CLP Automação Básica', 'Instalações Comerciais', 'Projetos CAD'],
+      mapsQuery: 'Firjan+SENAI+Vassouras+Rua+Nilo+Pecanha'
+    },
+    {
+      id: 'senai_valenca',
+      name: 'Firjan SENAI Valença',
+      type: 'SENAI',
+      address: 'Rua Dom Pedro II, 221 - Centro, Valença - RJ, 27600-000',
+      phone: '(24) 2452-9600',
+      workingHours: '08:00 às 21:00 (Seg a Sex)',
+      description: 'Polo produtivo do Médio Paraíba na capacitação profissional em usinagem rotativa, moda e calçados.',
+      services: ['Costura Industrial Camisaria', 'Torno Mecânico e Fresagem', 'Logística de Suprimentos', 'Manutenção Frota Leve'],
+      mapsQuery: 'Firjan+SENAI+Valenca+Dom+Pedro+II'
+    },
+    {
+      id: 'senai_barra_pirai',
+      name: 'Firjan SENAI Barra do Piraí',
+      type: 'SENAI',
+      address: 'Rua Franklin de Moraes, 153 - Centro, Barra do Piraí - RJ, 27123-010',
+      phone: '(24) 2442-1200',
+      workingHours: '13:00 às 22:00 (Seg a Sex)',
+      description: 'Infraestrutura voltada ao desenvolvimento metal mecânico e fomento à automação industrial em microrregiões ferroviárias.',
+      services: ['Automação Eletropneumática', 'Instrumentação Básica', 'Suporte a Pequenas Indústrias', 'Treinamento Segurança'],
+      mapsQuery: 'Firjan+SENAI+Barra+do+Pirai+Franklin'
+    },
+    {
+      id: 'sesi_barra_mansa',
+      name: 'Firjan SESI Barra Mansa',
+      type: 'SESI',
+      address: 'Av. Argemiro de Paula Coutinho, 2000 - Centro, Barra Mansa - RJ, 27310-020',
+      phone: '(24) 3328-1400',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Centro integrado de lazer, atendimento odontológico e saúde ocupacional preventiva do SESI.',
+      services: ['Medicina Trabalho Periódicos', 'Quadra Areia e Piscinas', 'Eventos Culturais Regional Sesi', 'Palestras Bem-Estar'],
+      mapsQuery: 'Firjan+SESI+Barra+Mansa+Argemiro'
+    },
+    {
+      id: 'sesi_campos',
+      name: 'Firjan SESI Campos dos Goytacazes',
+      type: 'SESI',
+      address: 'Av. Deputado Bartolomeu Lysandro, 862 - Guarus, Campos dos Goytacazes - RJ, 28060-010',
+      phone: '(22) 2739-1700',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Estrutura completa de esporte e escola de educação básica SESI de alta referência do Norte Fluminense.',
+      services: ['Educação Infantil e Fundamental', 'Teatro Sesi Campos', 'Vacinação e Ergonomia Industrial', 'Clube Lazer Trabalhador'],
+      mapsQuery: 'Firjan+SESI+Campos+Bartolomeu+Lysandro'
+    },
+    {
+      id: 'sesi_macae',
+      name: 'Firjan SESI Macaé',
+      type: 'SESI',
+      address: 'Alameda Etelvino Gomes, 155 - Riviera Fluminense, Macaé - RJ, 27930-470',
+      phone: '(22) 2791-9500',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Preservando a saúde e integridade com foco extremo em ergonomia offshore e check-ups completos dos tripulantes marinhas.',
+      services: ['Check-up Clínico Integrado', 'Academia Condicionamento Físico', 'Apoio Psicossocial nas Empresas', 'Exames Saúde Ocupacional'],
+      mapsQuery: 'Firjan+SESI+Macae+Etelvino+Gomes'
+    },
+    {
+      id: 'sesi_petropolis',
+      name: 'Firjan SESI Petrópolis',
+      type: 'SESI',
+      address: 'Av. Barão do Rio Branco, 2564 - Centro, Petrópolis - RJ, 25680-276',
+      phone: '(24) 2244-3000',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Atuação robusta no apoio esportivo, odontologia clínica focado no bem-estar comunitário da Região Serrana.',
+      services: ['Clinica Dentária Especializada', 'Plano Bem-Estar SESI RJ', 'Atividades Físicas Hidroginástica', 'Fomento Cultural no Teatro Sesi'],
+      mapsQuery: 'Firjan+SESI+Petropolis+Barao+Rio+Branco'
+    },
+    {
+      id: 'sesi_friburgo',
+      name: 'Firjan SESI Nova Friburgo',
+      type: 'SESI',
+      address: 'Rua Teresópolis, 248 - Vila Amélia, Nova Friburgo - RJ, 28625-050',
+      phone: '(22) 2525-6200',
+      workingHours: '08:00 às 18:00 (Seg a Sex)',
+      description: 'Qualidade de vida com esporte de alta relevância, aulas escolares integradas e clube recreativo do trabalhador serrano.',
+      services: ['Ensino Médio Tecnológico Sesi', 'Clube Social Recreativo Sesi / RJ', 'Medicina Ocupacional Periódica', 'Atendimento Nutrológico'],
+      mapsQuery: 'Firjan+SESI+Nova+Friburgo+Rua+Teresopolis'
     }
   ];
+
+  // Helper function to dynamically deduce region of units
+  const getUnitRegion = (name: string, address: string): string => {
+    const n = name.toLowerCase();
+    const a = address.toLowerCase();
+    if (
+      n.includes('sede') || 
+      n.includes('maracanã') || 
+      n.includes('laranjeiras') || 
+      n.includes('jacarepaguá') || 
+      n.includes('benfica') || 
+      n.includes('santa cruz') || 
+      n.includes('niteroi') || 
+      n.includes('niterói') || 
+      n.includes('gonçalo')
+    ) {
+      return 'Capital / Região Metropolitana';
+    }
+    if (n.includes('caxias') || n.includes('nova iguaçu') || n.includes('iguacu')) {
+      return 'Baixada Fluminense';
+    }
+    if (
+      n.includes('volta redonda') || 
+      n.includes('resende') || 
+      n.includes('barra mansa') || 
+      n.includes('angra') || 
+      n.includes('piraí') || 
+      n.includes('valença') || 
+      n.includes('vassouras')
+    ) {
+      return 'Sul Fluminense';
+    }
+    if (n.includes('campos') || n.includes('macaé') || n.includes('macae')) {
+      return 'Norte Fluminense';
+    }
+    if (
+      n.includes('petrópolis') || 
+      n.includes('petropolis') || 
+      n.includes('friburgo') || 
+      n.includes('teresópolis') || 
+      n.includes('teresopolis')
+    ) {
+      return 'Região Serrana';
+    }
+    if (
+      n.includes('itaperuna') || 
+      n.includes('pádua') || 
+      n.includes('padua') || 
+      n.includes('três rios') || 
+      n.includes('tres rios') || 
+      n.includes('cabo frio')
+    ) {
+      return 'Noroeste / Centro-Sul / Lagos';
+    }
+    return 'Outras Regiões';
+  };
 
   // Filtering units logic
   const filteredUnits = firjanUnits.filter(unit => {
@@ -712,7 +1045,7 @@ export default function DashboardView({
                   allowFullScreen={false}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  src={`https://maps.google.com/maps?q=${activeUnit.mapsQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(activeUnit.name + ', ' + activeUnit.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 />
               </div>
 
@@ -746,6 +1079,151 @@ export default function DashboardView({
                   Abrir no Google Maps <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
+            </div>
+          </div>
+
+          {/* --- COMPREHENSIVE DIRECTORY TABLE OF ALL 32+ FIRJAN UNITS --- */}
+          <div className="glass-panel p-5 rounded-2xl border-zinc-800 space-y-4 text-left">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-900/80 pb-4">
+              <div className="space-y-1">
+                <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono px-2 py-0.5 rounded uppercase font-bold tracking-widest inline-block">
+                  GUIA REGIONAL INTEGRADO
+                </span>
+                <h3 className="text-sm font-bold font-display text-white uppercase tracking-wider flex items-center gap-2 mt-1">
+                  <Building2 className="w-4 h-4 text-purple-400" /> Diretório Completo de Unidades (Sesi & Senai RJ)
+                </h3>
+                <p className="text-[11px] text-zinc-400">Consulte ou localize qualquer uma das {firjanUnits.length} filiais operacionais do estado do Rio de Janeiro.</p>
+              </div>
+
+              {/* Search Inside Table */}
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-500" />
+                <input
+                  id="input_table_search"
+                  type="text"
+                  placeholder="Pesquisar por nome, cidade ou rua..."
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-900/80 rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-purple-500 font-sans"
+                />
+              </div>
+            </div>
+
+            {/* Region Filter Tabs */}
+            <div className="flex flex-wrap gap-1.5 pb-1">
+              {[
+                { id: 'all', name: 'Todas as Regiões' },
+                { id: 'Metropolitana', name: 'Região Metropolitana' },
+                { id: 'Baixada', name: 'Baixada Fluminense' },
+                { id: 'Sul', name: 'Sul Fluminense' },
+                { id: 'Serrana', name: 'Região Serrana' },
+                { id: 'Norte', name: 'Norte Fluminense' },
+                { id: 'Noroeste', name: 'Noroeste, Centro-Sul & Lagos' }
+              ].map(reg => (
+                <button
+                  id={`btn_reg_tab_${reg.id}`}
+                  key={reg.id}
+                  onClick={() => setTableRegion(reg.id)}
+                  className={`px-3 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                    tableRegion === reg.id
+                      ? 'bg-purple-600/20 text-purple-300 border-purple-500/40 shadow-sm'
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-900/80 hover:text-white hover:bg-zinc-900/40'
+                  }`}
+                >
+                  {reg.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Scrollable responsive table view */}
+            <div className="overflow-x-auto rounded-xl border border-zinc-900 bg-zinc-950/40 max-h-[400px] overflow-y-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-zinc-950 border-b border-zinc-900 text-zinc-400 font-mono text-[9px] uppercase font-bold tracking-wider">
+                    <th className="p-3">Unidade</th>
+                    <th className="p-3">Tipo</th>
+                    <th className="p-3">Região</th>
+                    <th className="p-3">Endereço Completo</th>
+                    <th className="p-3 text-center">Contato & Horários</th>
+                    <th className="p-3 text-right">Ação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-900/60 text-zinc-200">
+                  {firjanUnits
+                    .map(unit => ({ ...unit, region: getUnitRegion(unit.name, unit.address) }))
+                    .filter(unit => {
+                      const matchesSearch = 
+                        unit.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
+                        unit.address.toLowerCase().includes(tableSearch.toLowerCase()) ||
+                        unit.description.toLowerCase().includes(tableSearch.toLowerCase()) ||
+                        unit.id.toLowerCase().includes(tableSearch.toLowerCase());
+                      
+                      let matchesRegion = true;
+                      if (tableRegion !== 'all') {
+                        if (tableRegion === 'Metropolitana') matchesRegion = unit.region.includes('Metropolitana');
+                        else if (tableRegion === 'Baixada') matchesRegion = unit.region.includes('Baixada');
+                        else if (tableRegion === 'Sul') matchesRegion = unit.region.includes('Sul');
+                        else if (tableRegion === 'Serrana') matchesRegion = unit.region.includes('Serrana');
+                        else if (tableRegion === 'Norte') matchesRegion = unit.region.includes('Norte');
+                        else if (tableRegion === 'Noroeste') matchesRegion = unit.region.includes('Noroeste') || unit.region.includes('Centro-Sul') || unit.region.includes('Lagos');
+                      }
+                      return matchesSearch && matchesRegion;
+                    })
+                    .map(unit => {
+                      const isSelected = selectedUnitId === unit.id;
+                      return (
+                        <tr 
+                          key={unit.id} 
+                          className={`hover:bg-zinc-900/40 transition-colors ${
+                            isSelected ? 'bg-purple-650/10 font-medium' : ''
+                          }`}
+                        >
+                          <td className="p-3">
+                            <span className="font-extrabold text-white text-xs block leading-tight">{unit.name}</span>
+                            <span className="text-[10px] text-zinc-500 block mt-0.5 max-w-[200px] truncate" title={unit.description}>{unit.description}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase inline-block ${
+                              unit.type === 'Sede' 
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25' 
+                                : unit.type.includes('SESI') && unit.type.includes('SENAI')
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/25'
+                                : unit.type.includes('SENAI')
+                                ? 'bg-purple-500/10 text-purple-400 border border-purple-500/25'
+                                : 'bg-pink-500/10 text-pink-400 border border-pink-500/25'
+                            }`}>
+                              {unit.type}
+                            </span>
+                          </td>
+                          <td className="p-3 text-zinc-400 text-[11px] font-mono whitespace-nowrap">{unit.region}</td>
+                          <td className="p-3 text-zinc-300 max-w-[220px] truncate text-[11px]" title={unit.address}>{unit.address}</td>
+                          <td className="p-3">
+                            <div className="text-[10px] text-zinc-400 space-y-0.5 leading-none">
+                              <div className="flex items-center gap-1"><span className="text-zinc-600 font-bold font-mono">TEL:</span> <span className="font-mono text-zinc-300 select-all">{unit.phone}</span></div>
+                              <div className="flex items-center gap-1 text-[9.5px] mt-0.5 text-zinc-500"><span className="text-zinc-600 font-bold font-mono">HOR:</span> <span>{unit.workingHours}</span></div>
+                            </div>
+                          </td>
+                          <td className="p-3 text-right">
+                            <button
+                              id={`btn_locate_table_${unit.id}`}
+                              onClick={() => {
+                                setSelectedUnitId(unit.id);
+                                document.getElementById('firjan_embedded_google_map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }}
+                              className={`px-2 md:px-2.5 py-1 text-[10px] font-black rounded-lg uppercase cursor-pointer border transition-all flex items-center gap-1 ml-auto ${
+                                isSelected
+                                  ? 'bg-green-500/15 text-green-300 border-green-500/35'
+                                  : 'bg-zinc-900 border-zinc-800 text-purple-400 hover:text-white hover:bg-zinc-800'
+                              }`}
+                            >
+                              <MapPin className="w-3 h-3" /> {isSelected ? 'Inspecionada' : 'Localizar'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
