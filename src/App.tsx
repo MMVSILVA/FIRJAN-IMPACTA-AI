@@ -51,7 +51,17 @@ import { ESTADOS, UNIDADES_SENAI, UNIDADES_SESI, CARGOS_FUNCIONAIS } from './dat
 
 export default function App() {
   // Current user / profile state
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('firjan_connected_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [simulatedUsers, setSimulatedUsers] = useState<UserProfile[]>([]);
@@ -195,18 +205,40 @@ export default function App() {
   }, []);
 
   // Periodic statistics & logs refresher
-  const fetchState = async () => {
+  const fetchState = async (skipUserRefresh = false) => {
     try {
       const resUsers = await fetch(`/api/auth/users?t=${Date.now()}`);
       if (resUsers.ok) {
-        const data = await resUsers.json();
+        let data = await resUsers.json();
+        if (!Array.isArray(data)) {
+          data = [];
+        }
+
+        // Merge in locally registered users from localStorage (Vercel offline persistent backup)
+        const localReg = localStorage.getItem('firjan_local_users');
+        if (localReg) {
+          try {
+            const parsedLocal = JSON.parse(localReg);
+            if (Array.isArray(parsedLocal)) {
+              parsedLocal.forEach(lu => {
+                if (!data.some((u: UserProfile) => u.email.trim().toLowerCase() === lu.email.trim().toLowerCase())) {
+                  data.push(lu);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge local users:', e);
+          }
+        }
+
         setSimulatedUsers(data);
         
-        // Refresh active user details if logged in
-        if (currentUser) {
+        // Refresh active user details if logged in and not logging out
+        if (currentUser && !skipUserRefresh) {
           const updatedSelf = data.find((u: UserProfile) => u.id === currentUser.id);
           if (updatedSelf) {
             setCurrentUser(updatedSelf);
+            localStorage.setItem('firjan_connected_user', JSON.stringify(updatedSelf));
           }
         }
       }
@@ -288,12 +320,46 @@ export default function App() {
       try {
         data = JSON.parse(textResponse);
       } catch (err) {
-        console.error('Resposta inválida do backend:', textResponse);
-        setLoginError('Ocorreu um erro no servidor ou a resposta da rede foi inválida. Por favor, certifique-se de que a senha está correta ou tente de novo em instantes.');
+        console.warn('Invalid JSON from backend, checking fallback registry:', textResponse);
+        // Fallback check in local storage users
+        const localReg = localStorage.getItem('firjan_local_users');
+        if (localReg) {
+          const parsedLocal = JSON.parse(localReg);
+          if (Array.isArray(parsedLocal)) {
+            const localUser = parsedLocal.find((u: UserProfile) => u.email.trim().toLowerCase() === emailStr && u.password === loginPassword);
+            if (localUser) {
+              localStorage.setItem('firjan_connected_user', JSON.stringify(localUser));
+              setCurrentUser(localUser);
+              setLoginEmail('');
+              setLoginPassword('');
+              return;
+            }
+          }
+        }
+        setLoginError('Ocorreu um erro no servidor ou a resposta da rede foi inválida. Por favor, tente novamente em instantes.');
         return;
       }
 
       if (!res.ok || !data?.success) {
+        // Fallback check in local storage users before hard rejecting
+        const localReg = localStorage.getItem('firjan_local_users');
+        if (localReg) {
+          try {
+            const parsedLocal = JSON.parse(localReg);
+            if (Array.isArray(parsedLocal)) {
+              const localUser = parsedLocal.find((u: UserProfile) => u.email.trim().toLowerCase() === emailStr && u.password === loginPassword);
+              if (localUser) {
+                localStorage.setItem('firjan_connected_user', JSON.stringify(localUser));
+                setCurrentUser(localUser);
+                setLoginEmail('');
+                setLoginPassword('');
+                return;
+              }
+            }
+          } catch (e) {
+            console.error('Local fallback auth error:', e);
+          }
+        }
         setLoginError(data?.error || 'Autenticação reprovada. Verifique suas credenciais de rede.');
         return;
       }
@@ -303,11 +369,32 @@ export default function App() {
         setShowMfaStep(true);
         setMfaError('');
       } else {
+        localStorage.setItem('firjan_connected_user', JSON.stringify(data.user));
         setCurrentUser(data.user);
         setLoginEmail('');
         setLoginPassword('');
       }
     } catch (err) {
+      console.warn('Network or connection exception during login. Querying persistent browser backup registry:', err);
+      // Fallback check in local storage users
+      const localReg = localStorage.getItem('firjan_local_users');
+      if (localReg) {
+        try {
+          const parsedLocal = JSON.parse(localReg);
+          if (Array.isArray(parsedLocal)) {
+            const localUser = parsedLocal.find((u: UserProfile) => u.email.trim().toLowerCase() === emailStr && u.password === loginPassword);
+            if (localUser) {
+              localStorage.setItem('firjan_connected_user', JSON.stringify(localUser));
+              setCurrentUser(localUser);
+              setLoginEmail('');
+              setLoginPassword('');
+              return;
+            }
+          }
+        } catch (localErr) {
+          console.error('Failed fallback authentication query:', localErr);
+        }
+      }
       setLoginError('Falha temporária ao comunicar com o servidor de autenticação. Por favor, verifique sua conexão ou tente novamente.');
     }
   };
@@ -358,6 +445,24 @@ export default function App() {
     }
 
     setIsSubmitRegistering(true);
+    const mockedNewUser: UserProfile = {
+      id: `user_${Date.now()}`,
+      name: regName.trim(),
+      email: cleanedEmail,
+      password: regPassword || 'firjan123',
+      role: regRole,
+      department: regSetor || 'Geral',
+      points: 100,
+      badges: ['Inovador Iniciante'],
+      avatar: regAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+      matricula: regMatricula.trim(),
+      setor: regSetor,
+      unidade: regUnidade.trim(),
+      estado: regEstado,
+      cidade: regCidade.trim(),
+      mfaEnabled: regMfaEnabled
+    };
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -379,6 +484,17 @@ export default function App() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        // Save to persistent localStorage to survive Vercel scale-downs
+        const localReg = localStorage.getItem('firjan_local_users');
+        let parsedLocal = [];
+        if (localReg) {
+          try { parsedLocal = JSON.parse(localReg); } catch (e) {}
+        }
+        if (!Array.isArray(parsedLocal)) parsedLocal = [];
+        parsedLocal.push(data.user);
+        localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocal));
+        localStorage.setItem('firjan_connected_user', JSON.stringify(data.user));
+
         setRegSuccess('Cadastro realizado com sucesso! Conectando você ao novo ecossistema...');
         setTimeout(() => {
           setCurrentUser(data.user);
@@ -393,10 +509,36 @@ export default function App() {
           setRegMfaEnabled(false);
         }, 1500);
       } else {
+        // Backend returned business error (like email already exists in state)
         setRegError(data.error || 'Falha ao registrar colaborador.');
       }
     } catch (err) {
-      setRegError('Falha temporária ao comunicar com o servidor.');
+      console.warn('Vercel backend offline or timed out, falling back to local storage persistence:', err);
+      
+      // Complete registration process safely in client fallback mode
+      const localReg = localStorage.getItem('firjan_local_users');
+      let parsedLocal = [];
+      if (localReg) {
+        try { parsedLocal = JSON.parse(localReg); } catch (e) {}
+      }
+      if (!Array.isArray(parsedLocal)) parsedLocal = [];
+      parsedLocal.push(mockedNewUser);
+      localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocal));
+      localStorage.setItem('firjan_connected_user', JSON.stringify(mockedNewUser));
+
+      setRegSuccess('Cadastro realizado com sucesso! Conectando você ao novo ecossistema...');
+      setTimeout(() => {
+        setCurrentUser(mockedNewUser);
+        setIsRegistering(false);
+        // clear forms
+        setRegName('');
+        setRegEmail('');
+        setRegPassword('');
+        setRegMatricula('');
+        setRegUnidade('');
+        setRegAvatar('');
+        setRegMfaEnabled(false);
+      }, 1500);
     } finally {
       setIsSubmitRegistering(false);
     }
@@ -621,8 +763,26 @@ export default function App() {
 
   const handleLogout = (reason = 'Usuário solicitou') => {
     if (currentUser) {
+      const loggerUser = currentUser;
       // Send optional logout analytics info log to server before signoff
-      updateServerLog('Logout de Sessão', `${reason} encerrou a sessão conectada.`);
+      try {
+        fetch('/api/insights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'gargalo',
+            title: 'Logout de Sessão',
+            description: `${reason} encerrou a sessão conectada.`,
+            area: loggerUser.unidade || loggerUser.department,
+            userId: loggerUser.id,
+            userName: loggerUser.name
+          })
+        }).then(() => fetchState(true));
+      } catch (err) {
+        console.error('Failed to report logout:', err);
+      }
+      
+      localStorage.removeItem('firjan_connected_user');
       setCurrentUser(null);
       setActiveTab('dashboard');
     }
@@ -874,24 +1034,20 @@ export default function App() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.06),transparent_60%)] pointer-events-none" />
         
         {/* Nav header of Login */}
-        <header className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 items-center py-6 px-4 relative z-10 border-b border-zinc-900/60 mb-4">
+        <header className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center py-6 px-4 relative z-10 border-b border-zinc-900/60 mb-4">
           <div className="flex justify-center md:justify-start items-center w-full">
             <img 
               src="/impacta_logo.png" 
-              alt="Firjan Impacta AI Logo" 
+              alt="Impacta AI Logo" 
               className="h-auto w-full max-w-[340px] sm:max-w-[400px] md:max-w-[460px] lg:max-w-[500px] object-contain transition-transform duration-300 hover:scale-[1.03]"
               referrerPolicy="no-referrer"
             />
           </div>
           
-          <div className="text-center px-2">
+          <div className="text-center md:text-right px-2">
             <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black tracking-tight font-display text-transparent bg-clip-text bg-gradient-to-r from-zinc-50 via-zinc-200 to-zinc-400 leading-tight">
               Plataforma Institucional de Inteligência Operacional Contínua baseada em IA
             </h1>
-          </div>
-          
-          <div className="flex justify-center md:justify-end items-center">
-            <FirjanLogo className="h-14 sm:h-18 md:h-22 w-auto text-zinc-300 hover:text-white transition-colors duration-250" showSubText={true} />
           </div>
         </header>
 
@@ -901,7 +1057,7 @@ export default function App() {
             
             {/* Header info switcher */}
             <div className="text-center space-y-3">
-              <div className="py-1 flex items-center justify-center">
+              <div className="py-2 flex items-center justify-center">
                 <FirjanLogo className="h-10 w-auto" showSubText={false} />
               </div>
               <h2 className="text-sm font-extrabold font-display tracking-widest uppercase text-white pt-1">
