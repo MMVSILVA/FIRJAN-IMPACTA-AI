@@ -266,7 +266,7 @@ app.post('/api/auth/register', async (req, res, next) => {
       password: password || 'firjan123',
       role: role || 'Colaborador',
       department: setor || 'Geral',
-      points: 100, // Onboarding and Register starter pack
+      points: 0, // Starts with zero as requested, grows with ideas
       badges: ['Inovador Iniciante'],
       avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
       matricula,
@@ -757,25 +757,49 @@ app.post('/api/chat', async (req, res, next) => {
       try {
         console.log('API Chat: Resolvendo via Gemini');
         
-        // Reconstruct simple sequential contents structure if history is supplied
-        const formattedContents: any[] = [];
+        // Reconstruct and strictly alternate the contents for Gemini compliance (starts with user, alternates user/model)
+        const cleanContents: any[] = [];
+        let expectedRole = 'user';
+
         if (history && Array.isArray(history)) {
           history.forEach((msg: any) => {
-            formattedContents.push({
-              role: msg.role === 'model' ? 'model' : 'user',
-              parts: [{ text: msg.content }]
-            });
+            if (!msg.content || msg.content.trim() === '') return;
+            const mappedRole = msg.role === 'model' ? 'model' : 'user';
+            
+            if (mappedRole === expectedRole) {
+              cleanContents.push({
+                role: mappedRole,
+                parts: [{ text: msg.content.trim() }]
+              });
+              expectedRole = expectedRole === 'user' ? 'model' : 'user';
+            } else if (mappedRole === 'user' && expectedRole === 'model') {
+              // Merge duplicate adjacent user messages to maintain order
+              if (cleanContents.length > 0) {
+                const lastMsg = cleanContents[cleanContents.length - 1];
+                if (lastMsg.parts && lastMsg.parts[0]) {
+                  lastMsg.parts[0].text += '\n' + msg.content.trim();
+                }
+              }
+            }
           });
         }
-        
-        formattedContents.push({
-          role: 'user',
-          parts: [{ text: message }]
-        });
+
+        // Append the current message
+        if (expectedRole === 'model' && cleanContents.length > 0) {
+          const lastMsg = cleanContents[cleanContents.length - 1];
+          if (lastMsg.parts && lastMsg.parts[0]) {
+            lastMsg.parts[0].text += '\n' + message.trim();
+          }
+        } else {
+          cleanContents.push({
+            role: 'user',
+            parts: [{ text: message.trim() }]
+          });
+        }
 
         const response = await ai.models.generateContent({
           model: 'gemini-3.5-flash',
-          contents: formattedContents,
+          contents: cleanContents,
           config: {
             systemInstruction: FIRJAN_CONTEXTO,
             temperature: 0.7

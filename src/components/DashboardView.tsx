@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Building2, 
@@ -53,6 +53,7 @@ interface DashboardViewProps {
   currentUser: UserProfile;
   onRedeemReward: (itemId: string, itemPrice: number, itemName: string) => Promise<{ success: boolean; voucher?: string; error?: string }>;
   onSimulateUser?: (userId: string) => Promise<void>;
+  initialTab?: 'kpis' | 'maps' | 'rewards' | 'colaboradores';
 }
 
 export default function DashboardView({ 
@@ -62,7 +63,8 @@ export default function DashboardView({
   onNavigate,
   currentUser,
   onRedeemReward,
-  onSimulateUser
+  onSimulateUser,
+  initialTab
 }: DashboardViewProps) {
   // Analytical Calculations
   const totalIdeas = ideas.length;
@@ -78,6 +80,20 @@ export default function DashboardView({
       }
       return acc + 40000; // default simulation saving if not present
     }, 0);
+
+  // Simulated material/resource waste mitigated (Desperdício Mitigado)
+  const totalWasteMitigated = ideas
+    .filter(i => i.status === 'Aprovado' || i.status === 'Em implementação' || i.status === 'Finalizado')
+    .reduce((acc, curr) => {
+      if (curr.aiReview?.operationalSaving) {
+        const val = parseInt(curr.aiReview.operationalSaving.replace(/[^0-9]/g, ''), 10);
+        return acc + (isNaN(val) ? 0 : Math.round(val * 0.42)); // 42% of saving is mitigated direct waste
+      }
+      return acc + 16800;
+    }, 0);
+
+  // Adesão de Fomento (Engagement / active fumento rate)
+  const engagementRate = users.length ? Math.min(99.8, Math.max(78.5, 88.4 + (ideas.length * 1.1))) : 95.8;
 
   // Group ideas by department/area
   const deptCount: { [key: string]: number } = {
@@ -113,7 +129,13 @@ export default function DashboardView({
     .sort((a, b) => b.points - a.points);
 
   // Local dashboard tabs
-  const [dashboardTab, setDashboardTab] = useState<'kpis' | 'maps' | 'rewards' | 'colaboradores'>('kpis');
+  const [dashboardTab, setDashboardTab] = useState<'kpis' | 'maps' | 'rewards' | 'colaboradores'>(initialTab || 'kpis');
+
+  useEffect(() => {
+    if (initialTab) {
+      setDashboardTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Interactive Maps state
   const [selectedUnitId, setSelectedUnitId] = useState<string>('sede_botafogo');
@@ -694,7 +716,7 @@ export default function DashboardView({
           </motion.div>
 
           {/* KPI Mini grids - Corporate Premium Neon Theme */}
-          <motion.div variants={cardVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <motion.div variants={cardVariants} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             
             {/* KPI 1 - Ideias Cadastradas */}
             <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-purple-500/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300">
@@ -721,25 +743,37 @@ export default function DashboardView({
             </div>
 
             {/* KPI 3 - Economia Estimada (ROI) */}
-            <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-purple-500/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300 col-span-2 sm:col-span-1">
+            <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-purple-500/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300">
               <div className="p-2 w-10 h-10 rounded-lg bg-purple-500/10 text-purple-300 flex items-center justify-center border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
                 <DollarSign className="w-5 h-5 text-purple-400" />
               </div>
-              <div className="text-left">
+              <div className="text-left font-sans">
                 <span className="text-[9px] text-zinc-500 block font-bold uppercase tracking-wider font-mono">Retorno ROI Est.</span>
-                <span className="text-lg font-extrabold font-display text-green-400 leading-none block mt-0.5 font-sans">R$ {totalSavings.toLocaleString('pt-BR')}</span>
-                <span className="text-[9px] text-green-500 block font-mono mt-0.5">Desperdício Mitigado</span>
+                <span className="text-lg font-extrabold font-display text-green-400 leading-none block mt-0.5">R$ {totalSavings.toLocaleString('pt-BR')}</span>
+                <span className="text-[9px] text-purple-400 block font-mono mt-0.5">Economia Est.</span>
               </div>
             </div>
 
-            {/* KPI 4 - Engajamento Interno */}
-            <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-green-400/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition-all duration-300 col-span-2 sm:col-span-1">
+            {/* KPI 4 - Desperdício Mitigado */}
+            <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-green-400/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(34,197,94,0.1)] transition-all duration-300">
               <div className="p-2 w-10 h-10 rounded-lg bg-green-400/10 text-green-400 flex items-center justify-center border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.2)]">
                 <TrendingUp className="w-5 h-5 text-green-400" />
               </div>
               <div className="text-left font-sans">
+                <span className="text-[9px] text-zinc-500 block font-bold uppercase tracking-wider font-mono">Desperdício Mitigado</span>
+                <span className="text-lg font-extrabold font-display text-green-400 leading-none block mt-0.5">R$ {totalWasteMitigated.toLocaleString('pt-BR')}</span>
+                <span className="text-[9px] text-green-500 block font-mono mt-0.5">Custo Evitado</span>
+              </div>
+            </div>
+
+            {/* KPI 5 - Engajamento Interno */}
+            <div className="glass-panel p-4 rounded-xl border border-zinc-900 hover:border-purple-500/40 flex items-center gap-3 bg-zinc-950/60 shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300 col-span-2 sm:col-span-1 lg:col-span-1">
+              <div className="p-2 w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                <Users className="w-5 h-5 text-purple-400 animate-pulse" />
+              </div>
+              <div className="text-left font-sans">
                 <span className="text-[9px] text-zinc-500 block font-bold uppercase tracking-wider font-mono">Adesão de Fomento</span>
-                <span className="text-xl font-extrabold font-display text-white leading-none block mt-0.5">95.8%</span>
+                <span className="text-xl font-extrabold font-display text-white leading-none block mt-0.5">{engagementRate.toFixed(1)}%</span>
                 <span className="text-[9px] text-purple-400 block font-mono mt-0.5">Participação FIRJAN</span>
               </div>
             </div>

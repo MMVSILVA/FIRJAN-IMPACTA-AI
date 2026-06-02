@@ -23,7 +23,8 @@ import {
   UserPlus,
   MessageSquare,
   Cog,
-  Edit3
+  Edit3,
+  Gift
 } from 'lucide-react';
 
 // Imports of Modular Component Views
@@ -456,7 +457,7 @@ export default function App() {
       password: regPassword || 'firjan123',
       role: regRole,
       department: regSetor || 'Geral',
-      points: 100,
+      points: 0,
       badges: ['Inovador Iniciante'],
       avatar: regAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
       matricula: regMatricula.trim(),
@@ -1714,7 +1715,7 @@ export default function App() {
         <div className="space-y-6">
           
           {/* Brand header */}
-          <div className="flex flex-col gap-3 pb-3 border-b border-zinc-900/80">
+          <div className="flex flex-col gap-2 pb-3 border-b border-zinc-900/80 text-left">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FirjanLogo className="h-9 w-auto text-white" showSubText={true} />
@@ -1733,6 +1734,9 @@ export default function App() {
                 <X className="w-4 h-4" />
               </button>
             </div>
+            <p className="text-[9px] text-zinc-400 font-sans tracking-tight leading-relaxed max-w-[220px]">
+              Canal institucional de fomento, análise por IA, gamificação e homologação contínua de melhorias.
+            </p>
           </div>
 
           {/* Connected User Profile Widget - Mapeado para matricula, setor e unidade ao logar */}
@@ -1816,29 +1820,36 @@ export default function App() {
           <nav className="space-y-1 align-left text-left">
             <span className="text-[9px] text-zinc-300 font-mono font-bold uppercase block px-2 mb-1.5 tracking-wider">Módulos de Inovação</span>
             {[
-              { id: 'dashboard', name: 'Painel Executivo', icon: TrendingUp },
-              { id: 'cadastro', name: 'Portal de Ideias', icon: Lightbulb },
+              { id: 'dashboard', name: 'Dashboard & Economia', icon: TrendingUp },
+              { id: 'cadastro', name: 'Ideias & Aprovação', icon: Lightbulb },
+              { id: 'loja', name: 'Gamificação & Loja', icon: Gift },
               { id: 'chat', name: 'Assistente Virtual AI', icon: Sparkles },
-              { id: 'wiki', name: 'Banco de Conhecimento', icon: BookOpen },
+              { id: 'wiki', name: 'Central de Conhecimento', icon: BookOpen, description: 'Políticas, manuais SENAI/SESI e fluxogramas estratégicos consolidados.' },
               { id: 'eficiencia', name: 'Desperdícios e Gargalos', icon: AlertTriangle }
             ].map((tab) => {
               const IconComp = tab.icon;
               return (
-                <button
-                  id={`btn_nav_${tab.id}`}
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setIsSidebarOpen(false); // Auto close sidebar drawer on mobile tap
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-xs font-semibold transition-all select-none ${
-                    activeTab === tab.id 
-                      ? 'bg-purple-600 text-white font-extrabold shadow-md shadow-purple-600/15 scale-[1.01]'
-                      : 'text-zinc-200 hover:text-white hover:bg-zinc-900/60'
-                  }`}
-                >
-                  <IconComp className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-white' : 'text-purple-400'}`} /> {tab.name}
-                </button>
+                <div key={tab.id} className="space-y-0.5">
+                  <button
+                    id={`btn_nav_${tab.id}`}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setIsSidebarOpen(false); // Auto close sidebar drawer on mobile tap
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-left text-xs font-semibold transition-all select-none ${
+                      activeTab === tab.id 
+                        ? 'bg-purple-600 text-white font-extrabold shadow-md shadow-purple-600/15 scale-[1.01]'
+                        : 'text-zinc-200 hover:text-white hover:bg-zinc-900/60'
+                    }`}
+                  >
+                    <IconComp className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-white' : 'text-purple-400'}`} /> {tab.name}
+                  </button>
+                  {tab.description && (
+                    <span className="text-[9px] text-zinc-500 block px-4 leading-normal mt-0.5 max-w-[220px]">
+                      {tab.description}
+                    </span>
+                  )}
+                </div>
               );
             })}
 
@@ -1904,7 +1915,7 @@ export default function App() {
 
         {/* Central tab layout workspace router */}
         <div className="flex-1 p-4 md:p-6 overflow-y-auto max-h-[calc(100vh-56px)]">
-          {activeTab === 'dashboard' && (
+          {(activeTab === 'dashboard' || activeTab === 'loja') && (
             <DashboardView 
               ideas={ideas} 
               insights={operationalInsights} 
@@ -1913,6 +1924,7 @@ export default function App() {
               currentUser={currentUser}
               onRedeemReward={handleRedeemReward}
               onSimulateUser={handleSimulatedProfileSelect}
+              initialTab={activeTab === 'loja' ? 'rewards' : 'kpis'}
             />
           )}
 
