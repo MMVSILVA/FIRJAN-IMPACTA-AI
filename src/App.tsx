@@ -332,6 +332,7 @@ export default function App() {
               setCurrentUser(localUser);
               setLoginEmail('');
               setLoginPassword('');
+              fetchState(true);
               return;
             }
           }
@@ -353,6 +354,7 @@ export default function App() {
                 setCurrentUser(localUser);
                 setLoginEmail('');
                 setLoginPassword('');
+                fetchState(true);
                 return;
               }
             }
@@ -373,6 +375,7 @@ export default function App() {
         setCurrentUser(data.user);
         setLoginEmail('');
         setLoginPassword('');
+        fetchState(true);
       }
     } catch (err) {
       console.warn('Network or connection exception during login. Querying persistent browser backup registry:', err);
@@ -388,6 +391,7 @@ export default function App() {
               setCurrentUser(localUser);
               setLoginEmail('');
               setLoginPassword('');
+              fetchState(true);
               return;
             }
           }
@@ -496,6 +500,7 @@ export default function App() {
         localStorage.setItem('firjan_connected_user', JSON.stringify(data.user));
 
         setRegSuccess('Cadastro realizado com sucesso! Conectando você ao novo ecossistema...');
+        fetchState(true);
         setTimeout(() => {
           setCurrentUser(data.user);
           setIsRegistering(false);
@@ -527,6 +532,7 @@ export default function App() {
       localStorage.setItem('firjan_connected_user', JSON.stringify(mockedNewUser));
 
       setRegSuccess('Cadastro realizado com sucesso! Conectando você ao novo ecossistema...');
+      fetchState(true);
       setTimeout(() => {
         setCurrentUser(mockedNewUser);
         setIsRegistering(false);

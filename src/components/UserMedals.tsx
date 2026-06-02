@@ -14,6 +14,7 @@ interface MedalDetails {
 
 export default function UserMedals({ points, badges = [] }: { points: number; badges?: string[] }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const listMedals: MedalDetails[] = [
     {
@@ -78,15 +79,19 @@ export default function UserMedals({ points, badges = [] }: { points: number; ba
     },
   ];
 
+  const activeMedalId = selectedId || hoveredId;
+  const activeMedal = listMedals.find(m => m.id === activeMedalId);
+
   return (
-    <div className="pt-2.5 border-t border-zinc-900/80">
-      <span className="text-[7.5px] uppercase font-bold text-zinc-600 block mb-1.5 font-mono tracking-wider">
+    <div className="pt-2.5 border-t border-zinc-900/80 space-y-2">
+      <span className="text-[7.5px] uppercase font-bold text-zinc-400 block font-mono tracking-wider">
         CONQUISTAS E MEDALHAS DINÂMICAS:
       </span>
       <div className="grid grid-cols-6 gap-2">
         {listMedals.map((medal) => {
           const isUnlocked = medal.condition(points, badges);
           const IconComp = medal.icon;
+          const isCurrentActive = activeMedalId === medal.id;
 
           return (
             <div
@@ -94,56 +99,56 @@ export default function UserMedals({ points, badges = [] }: { points: number; ba
               className="relative flex justify-center items-center"
               onMouseEnter={() => setHoveredId(medal.id)}
               onMouseLeave={() => setHoveredId(null)}
+              onClick={() => setSelectedId(selectedId === medal.id ? null : medal.id)}
             >
               {/* Individual Medal Circle */}
               <div
                 className={`w-7.5 h-7.5 rounded-full border flex items-center justify-center transition-all duration-300 relative cursor-pointer ${
                   isUnlocked
-                    ? `${medal.color} hover:scale-115 shadow-md hover:brightness-110`
-                    : `${medal.color} opacity-50 saturate-75 border-zinc-700/60 hover:opacity-100 hover:saturate-100 hover:scale-110`
+                    ? `${medal.color} ${isCurrentActive ? 'scale-110 ring-2 ring-purple-400' : 'hover:scale-110'} shadow-md hover:brightness-110`
+                    : `${medal.color} ${isCurrentActive ? 'scale-110 ring-2 ring-purple-400' : 'hover:scale-110'} opacity-55 saturate-75 border-zinc-700/60 hover:opacity-100 hover:saturate-100`
                 }`}
               >
                 <IconComp className="w-4 h-4" />
                 {!isUnlocked && (
-                  <div className="absolute -bottom-1 -right-1 bg-zinc-950 border border-zinc-800 rounded-full p-[1px] text-yellow-500 scale-75 animate-bounce-subtle">
-                    <Lock className="w-2 h-2" />
+                  <div className="absolute -bottom-1 -right-1 bg-zinc-950 border border-zinc-800 rounded-full p-[0.5px] text-yellow-500 scale-75">
+                    <Lock className="w-1.5 h-1.5" />
                   </div>
                 )}
               </div>
-
-              {/* Enhanced Interactive Tooltip */}
-              {hoveredId === medal.id && (
-                <div className="absolute z-50 bottom-9 left-1/2 -translate-x-1/2 w-52 p-3 bg-zinc-950 border border-zinc-800 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-zinc-800/80 animate-in fade-in zoom-in duration-150 pointer-events-none text-left">
-                  <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-zinc-950 border-r border-b border-zinc-800" />
-                  <div className="relative">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <IconComp className={`w-4 h-4 ${medal.color.split(' ')[0]}`} />
-                      <h4 className="text-[10px] font-extrabold text-white leading-none tracking-wide">
-                        {medal.name}
-                      </h4>
-                    </div>
-                    <span
-                      className={`text-[8px] px-1 py-0.2 rounded font-mono font-bold uppercase ${
-                        isUnlocked
-                          ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                          : 'bg-zinc-900 text-yellow-500 border border-yellow-500/20'
-                      }`}
-                    >
-                      {isUnlocked ? '✓ DESBLOQUEADO' : '🔒 BLOQUEADO'}
-                    </span>
-                    <p className="text-[9px] text-zinc-300 mt-1.5 leading-snug">
-                      {medal.description}
-                    </p>
-                    <p className="text-[8px] text-yellow-500/90 font-mono mt-1 pt-1 border-t border-zinc-850">
-                      Requisito: {medal.requirement}
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
+
+      {/* Elegant, Non-clipping Inline Detail Card */}
+      {activeMedal && (
+        <div className="p-2.5 bg-zinc-950 border border-zinc-850/80 rounded-lg text-left animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex items-center gap-1.5 mb-1 justify-between">
+            <div className="flex items-center gap-1.5">
+              {React.createElement(activeMedal.icon, { className: `w-3.5 h-3.5 ${activeMedal.color.split(' ')[0]}` })}
+              <h4 className="text-[10px] font-extrabold text-white leading-none tracking-wide">
+                {activeMedal.name}
+              </h4>
+            </div>
+            <span
+              className={`text-[7px] px-1 py-0.2 rounded font-mono font-bold uppercase ${
+                activeMedal.condition(points, badges)
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : 'bg-zinc-900 border border-zinc-800 text-yellow-500'
+              }`}
+            >
+              {activeMedal.condition(points, badges) ? '✓ CONQUISTADO' : '🔒 BLOQUEADO'}
+            </span>
+          </div>
+          <p className="text-[9px] text-zinc-300 leading-normal">
+            {activeMedal.description}
+          </p>
+          <p className="text-[8px] text-zinc-500 font-mono mt-1 pt-1 border-t border-zinc-900 leading-tight font-extrabold">
+            requisito: <span className="text-yellow-500">{activeMedal.requirement}</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
