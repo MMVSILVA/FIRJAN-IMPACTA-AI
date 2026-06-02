@@ -251,6 +251,24 @@ export default function App() {
       const resIdeas = await fetch(`/api/ideas?t=${Date.now()}`);
       if (resIdeas.ok) {
         const data = await resIdeas.json();
+        
+        // Merge and backup created ideas locally to survive Vercel backend recycling
+        const savedIdeas = localStorage.getItem('firjan_local_ideas');
+        if (savedIdeas) {
+          try {
+            const parsedIdeas = JSON.parse(savedIdeas);
+            if (Array.isArray(parsedIdeas)) {
+              parsedIdeas.forEach(li => {
+                if (!data.some((id: Idea) => id.id === li.id)) {
+                  data.unshift(li); // Place new local ideas on top
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge local ideas:', e);
+          }
+        }
+        
         setIdeas(data);
       }
     } catch (err) {
@@ -882,6 +900,16 @@ export default function App() {
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || 'Erro ao publicar.');
+    }
+
+    try {
+      const createdIdea = await res.json();
+      const savedIdeas = localStorage.getItem('firjan_local_ideas');
+      const parsedIdeas = savedIdeas ? JSON.parse(savedIdeas) : [];
+      parsedIdeas.push(createdIdea);
+      localStorage.setItem('firjan_local_ideas', JSON.stringify(parsedIdeas));
+    } catch (e) {
+      console.warn('LocalStorage backup for idea bypassed:', e);
     }
 
     fetchState(); // reload list with new reviews

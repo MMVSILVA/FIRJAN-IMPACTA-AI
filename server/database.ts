@@ -52,7 +52,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 // Safely load the Firebase configuration file from the root
 let firebaseConfig: any;
 try {
-  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  let configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (!fs.existsSync(configPath)) {
+    configPath = path.join(__dirname, '../firebase-applet-config.json');
+  }
+  if (!fs.existsSync(configPath)) {
+    configPath = path.join(__dirname, '../../firebase-applet-config.json');
+  }
   const rawConfig = fs.readFileSync(configPath, 'utf8');
   firebaseConfig = JSON.parse(rawConfig);
 } catch (err) {
@@ -541,10 +547,18 @@ class DatabaseStore {
       // If the writeable /tmp file doesn't exist, try initializing it from the read-only workspace template
       if (!fs.existsSync(tempPath)) {
         try {
-          const rootPath = path.join(process.cwd(), 'local_database.json');
+          let rootPath = path.join(process.cwd(), 'local_database.json');
+          if (!fs.existsSync(rootPath)) {
+            rootPath = path.join(__dirname, '../local_database.json');
+          }
+          if (!fs.existsSync(rootPath)) {
+            rootPath = path.join(__dirname, '../../local_database.json');
+          }
           if (fs.existsSync(rootPath)) {
             fs.copyFileSync(rootPath, tempPath);
-            console.log('[LOCAL STORE] Banco inicial copiado para o diretório temporário /tmp.');
+            console.log('[LOCAL STORE] Banco inicial copiado para o diretório temporário /tmp de:', rootPath);
+          } else {
+            console.warn('[LOCAL STORE] Nenhum modelo de banco local encontrado para copiar. O banco será seeded em memória e persistido em /tmp.');
           }
         } catch (copyErr) {
           console.error('[LOCAL STORE] Falha ao copiar base inicial para /tmp:', copyErr);
@@ -552,7 +566,15 @@ class DatabaseStore {
       }
       return tempPath;
     }
-    return path.join(process.cwd(), 'local_database.json');
+    
+    let dbPath = path.join(process.cwd(), 'local_database.json');
+    if (!fs.existsSync(dbPath)) {
+      const candidate = path.join(__dirname, '../local_database.json');
+      if (fs.existsSync(candidate)) {
+        dbPath = candidate;
+      }
+    }
+    return dbPath;
   }
 
   // Save all local data to local_database.json for persistent offline storage
