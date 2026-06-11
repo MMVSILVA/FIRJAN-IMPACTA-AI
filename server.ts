@@ -107,13 +107,14 @@ app.post('/api/auth/login', async (req, res, next) => {
     }
 
     if (!email) {
-      return res.status(400).json({ error: 'O email é obrigatório.' });
+      return res.json({ success: false, error: 'O email é obrigatório.' });
     }
 
     const cleanedEmail = email.trim().toLowerCase();
     if (!cleanedEmail.endsWith('@firjan.com.br')) {
       updateAuditLog('anon', 'Anônimo', 'Tentativa de Login Bloqueada', `E-mail não autorizado: ${cleanedEmail}`);
-      return res.status(403).json({
+      return res.json({
+        success: false,
         error: 'Acesso permitido apenas para colaboradores com e-mail institucional @firjan.com.br.'
       });
     }
@@ -123,7 +124,7 @@ app.post('/api/auth/login', async (req, res, next) => {
     if (user) {
       // Validate password if it exists on user profile
       if (user.password && password && user.password !== password) {
-        return res.status(401).json({ error: 'Senha de rede incorreta. Por favor verifique suas credenciais de rede.' });
+        return res.json({ success: false, error: 'Senha de rede incorreta. Por favor verifique suas credenciais de rede.' });
       }
 
       // Check if MFA is required for this user
@@ -166,11 +167,11 @@ app.post('/api/auth/verify-mfa', async (req, res, next) => {
   try {
     const { userId, code } = req.body;
     if (!userId || !code) {
-      return res.status(400).json({ error: 'ID do usuário e código de verificação são obrigatórios.' });
+      return res.json({ success: false, error: 'ID do usuário e código de verificação são obrigatórios.' });
     }
     const user = await db.getUserById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'Usuário não localizado.' });
+      return res.json({ success: false, error: 'Usuário não localizado.' });
     }
 
     // Allow standard testing overrides
@@ -178,7 +179,7 @@ app.post('/api/auth/verify-mfa', async (req, res, next) => {
       updateAuditLog(user.id, user.name, 'MFA Ativado/Verificado', 'Identidade corporativa validada sob múltiplos fatores com sucesso');
       return res.json({ success: true, user });
     } else {
-      return res.status(400).json({ error: 'Código de token MFA inválido ou expirado.' });
+      return res.json({ success: false, error: 'Código de token MFA inválido ou expirado.' });
     }
   } catch (err) {
     next(err);
@@ -190,12 +191,12 @@ app.post('/api/auth/forgot-password', async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ error: 'E-mail corporativo é obrigatório.' });
+      return res.json({ success: false, error: 'E-mail corporativo é obrigatório.' });
     }
     const cleanedEmail = email.trim().toLowerCase();
     const user = await db.getUserByEmail(cleanedEmail);
     if (!user) {
-      return res.status(404).json({ error: 'Este e-mail corporativo não se encontra registrado no Firjan Connect.' });
+      return res.json({ success: false, error: 'Este e-mail corporativo não se encontra registrado no Firjan Connect.' });
     }
 
     // Generate simulated 6-digit verification code
@@ -219,16 +220,16 @@ app.post('/api/auth/reset-password', async (req, res, next) => {
   try {
     const { email, code, newPassword } = req.body;
     if (!email || !code || !newPassword) {
-      return res.status(400).json({ error: 'E-mail corporativo, código verificador e nova senha são obrigatórios.' });
+      return res.json({ success: false, error: 'E-mail corporativo, código verificador e nova senha são obrigatórios.' });
     }
     const cleanedEmail = email.trim().toLowerCase();
     const user = await db.getUserByEmail(cleanedEmail);
     if (!user) {
-      return res.status(404).json({ error: 'Usuário não localizado.' });
+      return res.json({ success: false, error: 'Usuário não localizado.' });
     }
 
     if (!user.recoveryCode || user.recoveryCode !== code) {
-      return res.status(400).json({ error: 'Código verificador de recuperação inválido ou expirado.' });
+      return res.json({ success: false, error: 'Código verificador de recuperação inválido ou expirado.' });
     }
 
     await db.updateUser(user.id, { password: newPassword, recoveryCode: '' });
@@ -246,17 +247,17 @@ app.post('/api/auth/register', async (req, res, next) => {
     const { name, email, password, matricula, setor, unidade, estado, cidade, role, avatar, mfaEnabled } = req.body;
 
     if (!name || !email || !matricula || !unidade) {
-      return res.status(400).json({ error: 'Nome, e-mail corporativo, matrícula e unidade são obrigatórios.' });
+      return res.json({ success: false, error: 'Nome, e-mail corporativo, matrícula e unidade são obrigatórios.' });
     }
 
     const cleanedEmail = email.trim().toLowerCase();
     if (!cleanedEmail.endsWith('@firjan.com.br')) {
-      return res.status(400).json({ error: 'Acesso permitido apenas para colaboradores com e-mail institucional @firjan.com.br.' });
+      return res.json({ success: false, error: 'Acesso permitido apenas para colaboradores com e-mail institucional @firjan.com.br.' });
     }
 
     const exists = await db.getUserByEmail(cleanedEmail);
     if (exists) {
-      return res.status(400).json({ error: 'Este e-mail corporativo já se encontra registrado no Firjan Connect.' });
+      return res.json({ success: false, error: 'Este e-mail corporativo já se encontra registrado no Firjan Connect.' });
     }
 
     const newUser: UserProfile = {
@@ -291,7 +292,7 @@ app.post('/api/auth/update', async (req, res, next) => {
     const { userId, name, matricula, setor, unidade, estado, cidade, avatar, mfaEnabled } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: 'O ID do usuário é obrigatório.' });
+      return res.json({ success: false, error: 'O ID do usuário é obrigatório.' });
     }
 
     const updates: Partial<UserProfile> = {};
@@ -309,7 +310,7 @@ app.post('/api/auth/update', async (req, res, next) => {
 
     const user = await db.updateUser(userId, updates);
     if (!user) {
-      return res.status(404).json({ error: 'Colaborador não localizado.' });
+      return res.json({ success: false, error: 'Colaborador não localizado.' });
     }
 
     updateAuditLog(user.id, user.name, 'Edição de Perfil', 'Atualizou informações cadastrais e de perfil');
@@ -325,17 +326,17 @@ app.post('/api/auth/redeem', async (req, res, next) => {
     const { userId, itemId, itemPrice, itemName } = req.body;
 
     if (!userId || !itemId || !itemPrice || !itemName) {
-      return res.status(400).json({ error: 'Informações de resgate inválidas.' });
+      return res.json({ success: false, error: 'Informações de resgate inválidas.' });
     }
 
     const user = await db.getUserById(userId);
     if (!user) {
-      return res.status(404).json({ error: 'Colaborador não localizado.' });
+      return res.json({ success: false, error: 'Colaborador não localizado.' });
     }
 
     const updatedPoints = await db.redeemPoints(userId, itemPrice);
     if (updatedPoints === null) {
-      return res.status(400).json({ error: `Saldo insuficiente. Você possui ${user.points} pts e este brinde custa ${itemPrice} pts.` });
+      return res.json({ success: false, error: `Saldo insuficiente. Você possui ${user.points} pts e este brinde custa ${itemPrice} pts.` });
     }
 
     const voucherCode = `VOUCH-FIRJAN-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
