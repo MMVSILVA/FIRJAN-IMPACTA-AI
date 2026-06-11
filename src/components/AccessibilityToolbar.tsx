@@ -200,8 +200,8 @@ export default function AccessibilityToolbar({
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed ${
           activeTab === 'chat' 
-            ? 'bottom-[74px] right-4 md:bottom-[78px] md:right-6' 
-            : 'bottom-4 right-4 md:bottom-6 md:right-6'
+            ? 'bottom-[74px] left-4 md:bottom-[78px] md:left-6' 
+            : 'bottom-4 left-4 md:bottom-6 md:left-6'
         } bg-green-500 hover:bg-green-400 text-black p-3.5 rounded-full shadow-lg shadow-green-500/20 hover:scale-105 transition-all flex items-center gap-2 group focus:ring-2 focus:ring-white border border-green-300`}
         title="Controles de Acessibilidade e Inclusão"
       >
@@ -215,7 +215,7 @@ export default function AccessibilityToolbar({
       {isOpen && (
         <div className={`fixed ${
           activeTab === 'chat' ? 'bottom-[136px]' : 'bottom-20'
-        } right-4 md:right-6 w-96 max-w-[calc(100vw-32px)] glass-panel bg-zinc-950/95 border-purple-500/30 rounded-2xl shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-5`}>
+        } left-4 md:left-6 w-96 max-w-[calc(100vw-32px)] glass-panel bg-zinc-950/95 border-purple-500/30 rounded-2xl shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-5`}>
           <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-400" />

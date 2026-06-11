@@ -1,0 +1,4 @@
+[2026-06-11T18:11:50.300Z] POST /api/chat message: "Qual é o papel do SESI RJ?", history length: 0
+[2026-06-11T18:11:50.300Z] getGeminiClient: Key present: true, length: 39, is placeholder: false
+[2026-06-11T18:11:50.306Z] Resolvendo via Gemini API...
+[2026-06-11T18:11:54.971Z] Gemini Success! Response length: 1172
