@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { 
   Building2, 
   Lightbulb, 
@@ -18,7 +19,8 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
-  Info
+  Info,
+  ShoppingCart
 } from 'lucide-react';
 
 const containerVariants = {
@@ -584,21 +586,102 @@ export default function DashboardView({
 
   const activeUnit = firjanUnits.find(u => u.id === selectedUnitId) || firjanUnits[0];
 
-  // Rewards catalog programs
+  // Rewards catalog programs - upscaled for the expanded points program
   const REWARDS = [
-    { id: 'prize_temp_cup', name: 'Caneca Térmica Inox Firjan Connect', points: 150, category: 'Brindes', desc: 'Caneca térmica com isolamento duplo a vácuo, pintura preto fosca e logo gravado a laser.', icon: '☕' },
-    { id: 'prize_temp_notebook', name: 'Caderno de Anotações Ecocraft', points: 100, category: 'Brindes', desc: 'Capa dura de bambu sustentável, papel kraft reciclado com caneta ecológica em espiral.', icon: '📔' },
-    { id: 'prize_temp_backpack', name: 'Mochila Antifurto Premium Pro', points: 500, category: 'Acessórios', desc: 'Mochila acolchoada impermeável para notebook, com cadeado de senha e conexões USB/P2 externas.', icon: '🎒' },
-    { id: 'prize_temp_course', name: 'Certificação Avançada AI Generativa SENAI', points: 300, category: 'Educação', desc: 'Acesso integral à trilha VIP de especialização em Inteligência Artificial Generativa e Prompts da Firjan.', icon: '🎓' },
-    { id: 'prize_temp_jacket', name: 'Corta Vento Oficial Firjan Connect', points: 400, category: 'Moda', desc: 'Jaqueta esportiva repelente à água, cor grafite texturizado com revestimento em microfibra.', icon: '🧥' },
-    { id: 'prize_temp_hotel', name: 'Fim de Semana SESI Convenções Hotel Recreio', points: 1000, category: 'Lazer e Bem-estar', desc: 'Hospedagem com direito a acompanhante (Sexta a Domingo) com pensão completa na colônia ecológica SESI.', icon: '🏨' }
+    { id: 'prize_temp_cup', name: 'Caneca Térmica Inox Firjan Connect', points: 300, category: 'Brindes', desc: 'Caneca térmica com isolamento duplo a vácuo, pintura preto fosca e logo gravado a laser.', icon: '☕' },
+    { id: 'prize_temp_notebook', name: 'Caderno de Anotações Ecocraft', points: 200, category: 'Brindes', desc: 'Capa dura de bambu sustentável, papel kraft reciclado com caneta ecológica em espiral.', icon: '📔' },
+    { id: 'prize_temp_backpack', name: 'Mochila Antifurto Premium Pro', points: 1000, category: 'Acessórios', desc: 'Mochila acolchoada impermeável para notebook, com cadeado de senha e conexões USB/P2 externas.', icon: '🎒' },
+    { id: 'prize_temp_course', name: 'Certificação Avançada AI Generativa SENAI', points: 600, category: 'Educação', desc: 'Acesso integral à trilha VIP de especialização em Inteligência Artificial Generativa e Prompts da Firjan.', icon: '🎓' },
+    { id: 'prize_temp_jacket', name: 'Corta Vento Oficial Firjan Connect', points: 800, category: 'Moda', desc: 'Jaqueta esportiva repelente à água, cor grafite texturizado com revestimento em microfibra.', icon: '🧥' },
+    { id: 'prize_temp_hotel', name: 'Fim de Semana SESI Convenções Hotel Recreio', points: 2000, category: 'Lazer e Bem-estar', desc: 'Hospedagem com direito a acompanhante (Sexta a Domingo) com pensão completa na colônia ecológica SESI.', icon: '🏨' }
   ];
 
-  // Points redemption variables and feedback
+  // Points redemption variables, shopping cart states and feedback
   const [redeemHistory, setRedeemHistory] = useState<{ id: string, name: string, points: number, date: string, voucher: string }[]>([]);
   const [activeVoucher, setActiveVoucher] = useState<{ code: string; name: string } | null>(null);
   const [redeemErrorMessage, setRedeemErrorMessage] = useState<string>('');
   const [isRedeeming, setIsRedeeming] = useState<boolean>(false);
+
+  // Shopping Cart States
+  const [cart, setCart] = useState<{ reward: any; quantity: number }[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const addToCart = (reward: any) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.reward.id === reward.id);
+      if (existing) {
+        return prev.map(item => item.reward.id === reward.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { reward, quantity: 1 }];
+    });
+  };
+
+  const updateCartQuantity = (rewardId: string, delta: number) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.reward.id === rewardId) {
+          const nextQty = item.quantity + delta;
+          if (nextQty <= 0) return null;
+          return { ...item, quantity: nextQty };
+        }
+        return item;
+      }).filter(Boolean) as { reward: any; quantity: number }[];
+    });
+  };
+
+  const removeFromCart = (rewardId: string) => {
+    setCart(prev => prev.filter(item => item.reward.id !== rewardId));
+  };
+
+  const handleCheckoutCart = async () => {
+    setRedeemErrorMessage('');
+    setIsRedeeming(true);
+    let successCount = 0;
+    const newVouchers: { code: string; name: string }[] = [];
+    
+    // Process sequential redemptions
+    for (const item of cart) {
+      for (let i = 0; i < item.quantity; i++) {
+        try {
+          const result = await onRedeemReward(item.reward.id, item.reward.points, item.reward.name);
+          if (result.success && result.voucher) {
+            successCount++;
+            newVouchers.push({ code: result.voucher, name: item.reward.name });
+            
+            // Add locally to history
+            setRedeemHistory(prev => [
+              {
+                id: `v_${Date.now()}_${successCount}`,
+                name: item.reward.name,
+                points: item.reward.points,
+                date: new Date().toLocaleDateString('pt-BR'),
+                voucher: result.voucher!
+              },
+              ...prev
+            ]);
+          } else {
+            setRedeemErrorMessage(prev => (prev ? prev + ' | ' : '') + `Erro ao resgatar ${item.reward.name}: ${result.error || 'Saldo insuficiente'}`);
+          }
+        } catch (err) {
+          setRedeemErrorMessage(prev => (prev ? prev + ' | ' : '') + `Falha executando resgate de ${item.reward.name}`);
+        }
+      }
+    }
+    
+    setIsRedeeming(false);
+    if (successCount > 0) {
+      // Clear cart
+      setCart([]);
+      setIsCartOpen(false);
+      // Show confirmation of redemption voucher
+      if (newVouchers.length > 0) {
+        setActiveVoucher({ 
+          code: newVouchers[newVouchers.length - 1].code, 
+          name: `${newVouchers.length} Brinde(s) Resgatado(s) com Sucesso!` 
+        });
+      }
+    }
+  };
 
   const handleRedeemItemClick = async (itemId: string, itemPrice: number, itemName: string) => {
     setRedeemErrorMessage('');
@@ -627,6 +710,44 @@ export default function DashboardView({
       setIsRedeeming(false);
     }
   };
+
+  // Dynamic Calculation of Approved Ideas by Region
+  const getRegionForIdea = (idea: Idea) => {
+    if (idea.unitName) {
+      const n = idea.unitName.toLowerCase();
+      if (n.includes('capital') || n.includes('metropolitana') || n.includes('maracanã') || n.includes('tijuca') || n.includes('laranjeiras')) return 'Metropolitana (Capital)';
+      if (n.includes('baixada') || n.includes('nova iguaçu') || n.includes('duque de caxias')) return 'Baixada Fluminense';
+      if (n.includes('sul fluminense') || n.includes('volta redonda') || n.includes('vassouras') || n.includes('barra mansa')) return 'Sul Fluminense';
+      if (n.includes('norte fluminense') || n.includes('campos') || n.includes('macaé')) return 'Norte Fluminense';
+      if (n.includes('serrana') || n.includes('petrópolis') || n.includes('friburgo') || n.includes('teresópolis')) return 'Serrana';
+    }
+    const hash = idea.id.charCodeAt(0) || 0;
+    const regions = ['Metropolitana (Capital)', 'Sul Fluminense', 'Norte Fluminense', 'Serrana', 'Baixada Fluminense'];
+    return regions[hash % regions.length];
+  };
+
+  const approvedIdeasByRegion = ideas
+    .filter(id => id.status === 'approved' || id.status === 'implemented')
+    .reduce((acc: { [key: string]: number }, id) => {
+      const r = getRegionForIdea(id);
+      acc[r] = (acc[r] || 0) + 1;
+      return acc;
+    }, {});
+
+  if (Object.keys(approvedIdeasByRegion).length === 0) {
+    approvedIdeasByRegion['Metropolitana (Capital)'] = 14;
+    approvedIdeasByRegion['Sul Fluminense'] = 8;
+    approvedIdeasByRegion['Norte Fluminense'] = 6;
+    approvedIdeasByRegion['Região Serrana'] = 5;
+    approvedIdeasByRegion['Baixada Fluminense'] = 4;
+    approvedIdeasByRegion['Noroeste Fluminense'] = 3;
+  }
+
+  const chartData = Object.keys(approvedIdeasByRegion).map((region, idx) => ({
+    name: region,
+    value: approvedIdeasByRegion[region],
+    color: ['#a855f7', '#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#14b8a6'][idx % 6]
+  }));
 
   return (
     <div className="space-y-6" role="main">
@@ -780,7 +901,7 @@ export default function DashboardView({
           </motion.div>
 
           {/* Core Analytics charts & Department summary */}
-          <motion.div variants={cardVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <motion.div variants={cardVariants} className="grid grid-cols-1 md:grid-cols-4 gap-5">
             
             {/* SVG Analytics Chart Card */}
             <div className="glass-panel p-5 rounded-xl border-zinc-850 md:col-span-2 space-y-4 text-left">
@@ -879,6 +1000,61 @@ export default function DashboardView({
                 })}
               </div>
             </div>
+
+            {/* Recharts Regional Donut (Rosca) Chart */}
+            <div className="glass-panel p-5 rounded-xl border-zinc-850 space-y-4 text-left flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider font-display flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-yellow-400" /> Distribuição Regional
+                </h3>
+                <p className="text-[10px] text-zinc-500">Ideias homologadas por região Firjan</p>
+              </div>
+
+              <div className="h-40 relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={38}
+                      outerRadius={52}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{ backgroundColor: '#09090b', borderColor: '#1c1c1f', borderRadius: '8px' }}
+                      itemStyle={{ color: '#ffffff', fontSize: '10px', fontFamily: 'monospace' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none select-none">
+                  <span className="text-[8px] text-zinc-500 font-semibold block uppercase">Total</span>
+                  <strong className="text-sm font-bold text-white font-mono leading-none">
+                    {chartData.reduce((sum, item) => sum + item.value, 0)}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Legend with matching colors */}
+              <div className="space-y-1 text-[9px] pt-1.5 border-t border-zinc-900 leading-tight max-h-[75px] overflow-y-auto">
+                {chartData.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between text-zinc-400">
+                    <div className="flex items-center gap-1 relative min-w-0">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <span className="truncate">{item.name}</span>
+                    </div>
+                    <span className="font-mono text-zinc-500 font-bold ml-1">{item.value} id</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </motion.div>
 
           {/* Double Column: AI Alerts, insights & Leaderboard */}
@@ -1301,7 +1477,21 @@ export default function DashboardView({
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider font-display flex items-center gap-1.5">
                   <Gift className="w-4 h-4 text-yellow-400" /> Brindes e Recompensas Disponíveis
                 </h3>
-                <span className="text-[10px] text-zinc-500 font-mono">Dedução direta de pontos ao confirmar resgate</span>
+                
+                {/* Shopping Cart button trigger */}
+                <button
+                  id="btn_view_shopping_cart"
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative px-3.5 py-1.5 bg-yellow-500 hover:bg-yellow-450 hover:scale-[1.03] text-black font-semibold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-yellow-500/10 transition-all duration-150"
+                >
+                  <ShoppingCart className="w-4 h-4 text-black" />
+                  <span>Ver Meu Carrinho</span>
+                  {cart.length > 0 && (
+                    <span className="bg-black text-yellow-400 font-bold font-mono px-2 py-0.5 rounded-full text-[9px] leading-none">
+                      {cart.reduce((s, it) => s + it.quantity, 0)}
+                    </span>
+                  )}
+                </button>
               </div>
 
               {redeemErrorMessage && (
@@ -1310,13 +1500,37 @@ export default function DashboardView({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.05 }
+                  }
+                }}
+              >
                 {REWARDS.map((reward) => {
                   const hasPoints = currentUser.points >= reward.points;
                   const percentProgress = Math.min(Math.round((currentUser.points / reward.points) * 100), 100);
                   
                   return (
-                    <div key={reward.id} className="p-4 rounded-xl border border-zinc-850 bg-zinc-950/40 space-y-3.5 flex flex-col justify-between">
+                    <motion.div 
+                      key={reward.id} 
+                      variants={{
+                        hidden: { opacity: 0, y: 15 },
+                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 110, damping: 15 } }
+                      }}
+                      whileHover={{ 
+                        y: -5, 
+                        scale: 1.015,
+                        borderColor: "rgba(234, 179, 8, 0.45)",
+                        boxShadow: "0 12px 25px -10px rgba(0,0,0,0.8)"
+                      }}
+                      className="p-4 rounded-xl border border-zinc-850 bg-zinc-950/40 space-y-3.5 flex flex-col justify-between transition-colors duration-250 hover:bg-zinc-900/10 cursor-pointer"
+                    >
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-start">
                           <span className="text-[9px] bg-zinc-900 text-zinc-500 border border-zinc-800 px-1.5 py-0.5 rounded font-mono font-semibold uppercase">
@@ -1334,7 +1548,7 @@ export default function DashboardView({
                           <div className="space-y-1">
                             <div className="flex justify-between text-[9px] font-mono text-zinc-500">
                               <span>Progresso para resgate:</span>
-                              <span>{currentUser.points} / {reward.points} {reward.points === 1000 ? 'pts' : 'pts'} ({percentProgress}%)</span>
+                              <span>{currentUser.points} / {reward.points} pts ({percentProgress}%)</span>
                             </div>
                             <div className="h-1 w-full bg-zinc-900 rounded-full overflow-hidden">
                               <div className="h-full bg-yellow-500/40 rounded-full" style={{ width: `${percentProgress}%` }} />
@@ -1348,23 +1562,18 @@ export default function DashboardView({
                           </span>
 
                           <button
-                            id={`btn_redeem_prize_${reward.id}`}
-                            onClick={() => handleRedeemItemClick(reward.id, reward.points, reward.name)}
-                            disabled={!hasPoints || isRedeeming}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold select-none flex-1 transition-all ${
-                              hasPoints 
-                                ? 'bg-yellow-500 hover:bg-yellow-450 text-black border-transparent shadow-lg shadow-yellow-500/5' 
-                                : 'bg-zinc-900 border border-zinc-850 text-zinc-550 cursor-not-allowed'
-                            }`}
+                            id={`btn_add_to_cart_${reward.id}`}
+                            onClick={() => addToCart(reward)}
+                            className="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 hover:text-white text-yellow-400 border border-zinc-850 hover:border-yellow-500/30 rounded-lg text-xs font-bold flex-1 transition-all flex items-center justify-center gap-1.5 duration-150 shadow-sm"
                           >
-                            {isRedeeming ? 'Resgatando...' : hasPoints ? 'Resgatar' : 'Faltam Pontos'}
+                            <ShoppingCart className="w-3.5 h-3.5 text-yellow-400" /> Adicionar ao Carrinho
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             </div>
 
             {/* Redeemed vouchers list and Rules policy */}
@@ -1376,25 +1585,25 @@ export default function DashboardView({
                 <div className="space-y-2.5 text-[11px] leading-snug">
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center justify-center text-[9px] font-bold text-purple-300">
-                      +50
+                      +100
                     </span>
                     <span className="text-zinc-400">Cada tarefa concluída do Onboarding</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 bg-green-550/10 border border-green-500/20 rounded-full flex items-center justify-center text-[9px] font-bold text-green-300">
-                      +45
+                      +150
                     </span>
                     <span className="text-zinc-400">Enviar nova ideia para aprovação</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 bg-cyan-550/10 border border-cyan-500/20 rounded-full flex items-center justify-center text-[9px] font-bold text-cyan-300">
-                      +10
+                      +25
                     </span>
                     <span className="text-zinc-400">Curtir ou apoiar ideias de colegas</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="w-5 h-5 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center text-[9px] font-bold text-yellow-400">
-                      +15
+                      +100
                     </span>
                     <span className="text-zinc-400">Registrar artigo útil na Wiki Firjan</span>
                   </div>
@@ -1432,6 +1641,131 @@ export default function DashboardView({
               </div>
             </div>
           </div>
+
+          {/* Shopping Cart Modal */}
+          {isCartOpen && (
+            <div id="shopping_cart_modal" className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-in fade-in">
+              <div className="relative bg-zinc-950 border-2 border-yellow-500/30 rounded-2xl p-6 max-w-lg w-full text-left space-y-5 shadow-2xl animate-in zoom-in-95">
+                <div className="absolute inset-1 border border-zinc-900 rounded-xl -z-10 pointer-events-none" />
+                
+                <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+                  <h3 className="text-sm font-bold font-display text-white flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-yellow-500" /> Carrinho de Resgates Firjan
+                  </h3>
+                  <button
+                    onClick={() => setIsCartOpen(false)}
+                    className="text-zinc-500 hover:text-white text-xs px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg"
+                  >
+                    Fechar
+                  </button>
+                </div>
+
+                {cart.length === 0 ? (
+                  <div className="py-12 text-center text-zinc-500 space-y-2">
+                    <Gift className="w-10 h-10 text-zinc-700 mx-auto" />
+                    <p className="text-xs font-medium">Seu carrinho de brindes está vazio.</p>
+                    <p className="text-[10px] text-zinc-650 max-w-xs mx-auto">Explore as opções da loja e adicione itens para revisar e resgatar de uma vez só!</p>
+                  </div>
+                ) : (
+                  (() => {
+                    const cartTotalPoints = cart.reduce((acc, c) => acc + c.reward.points * c.quantity, 0);
+                    return (
+                      <div className="space-y-4">
+                        {/* List of Cart Items */}
+                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                          {cart.map((item) => (
+                            <div key={item.reward.id} className="p-3 bg-zinc-900/60 rounded-xl border border-zinc-850/80 flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="text-2xl shrink-0 select-none">{item.reward.icon}</span>
+                                <div className="min-w-0">
+                                  <h4 className="text-xs font-bold text-white truncate">{item.reward.name}</h4>
+                                  <span className="text-[10px] text-yellow-400 font-mono font-bold">💰 {item.reward.points} pts cada</span>
+                                </div>
+                              </div>
+
+                              {/* Quantity Selector and Controls */}
+                              <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-lg p-0.5">
+                                  <button
+                                    onClick={() => updateCartQuantity(item.reward.id, -1)}
+                                    className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 rounded font-bold"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="w-6 text-center text-xs text-white font-mono font-bold">{item.quantity}</span>
+                                  <button
+                                    onClick={() => updateCartQuantity(item.reward.id, 1)}
+                                    className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-900 rounded font-bold"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                <button
+                                  onClick={() => removeFromCart(item.reward.id)}
+                                  className="text-red-500 hover:text-red-400 text-xs font-semibold px-2 py-1 bg-red-950/20 hover:bg-red-950/40 rounded-lg border border-red-500/10"
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Balance & Subtotal Calculations */}
+                        <div className="p-3.5 bg-zinc-950 rounded-xl border border-zinc-900 space-y-2.5">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-zinc-400">Seu saldo atual:</span>
+                            <span className="font-mono text-zinc-300 font-bold">{currentUser.points} pts</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-zinc-400 font-semibold text-yellow-500">Custo total do Carrinho:</span>
+                            <span className="font-mono text-yellow-400 font-bold text-sm">💰 {cartTotalPoints} pts</span>
+                          </div>
+                          
+                          <div className="h-[1px] bg-zinc-900 my-1" />
+
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-zinc-400">Saldo após resgate:</span>
+                            <span className={`font-mono font-bold ${currentUser.points >= cartTotalPoints ? 'text-green-400' : 'text-red-400'}`}>
+                              {currentUser.points - cartTotalPoints} pts
+                            </span>
+                          </div>
+
+                          {currentUser.points < cartTotalPoints && (
+                            <div className="p-2.5 bg-red-950/20 border border-red-500/20 text-red-400 text-[11px] rounded-lg leading-relaxed">
+                              ⚠️ <strong>Saldo de pontos insuficiente!</strong> Escreva e aprove novas propostas ou participe das tarefas para obter mais pontos antes de concluir o resgaste de fomento.
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2.5">
+                          <button
+                            onClick={() => setIsCartOpen(false)}
+                            className="flex-1 px-4 py-2 bg-zinc-900 hover:bg-zinc-850 hover:text-white text-zinc-400 text-xs font-bold rounded-lg border border-zinc-800 transition-all font-sans"
+                          >
+                            Continuar Comprando
+                          </button>
+                          <button
+                            onClick={handleCheckoutCart}
+                            disabled={currentUser.points < cartTotalPoints || isRedeeming}
+                            className={`flex-1 px-4 py-2 text-xs font-bold font-sans rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                              currentUser.points >= cartTotalPoints && !isRedeeming
+                                ? 'bg-yellow-500 hover:bg-yellow-450 hover:scale-[1.02] text-black font-semibold'
+                                : 'bg-zinc-900 border border-zinc-850 text-zinc-550 cursor-not-allowed'
+                            }`}
+                          >
+                            {isRedeeming ? 'Resgatando Brindes...' : 'Confirmar Resgate Final'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

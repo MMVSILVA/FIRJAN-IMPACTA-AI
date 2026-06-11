@@ -222,7 +222,13 @@ export default function App() {
             const parsedLocal = JSON.parse(localReg);
             if (Array.isArray(parsedLocal)) {
               parsedLocal.forEach(lu => {
-                if (!data.some((u: UserProfile) => u.email.trim().toLowerCase() === lu.email.trim().toLowerCase())) {
+                const idx = data.findIndex((u: UserProfile) => u.email.trim().toLowerCase() === lu.email.trim().toLowerCase());
+                if (idx !== -1) {
+                  // Keep the local representation since it has points earned
+                  if ((lu.points || 0) > (data[idx].points || 0)) {
+                    data[idx] = { ...data[idx], ...lu };
+                  }
+                } else {
                   data.push(lu);
                 }
               });
@@ -250,7 +256,10 @@ export default function App() {
     try {
       const resIdeas = await fetch(`/api/ideas?t=${Date.now()}`);
       if (resIdeas.ok) {
-        const data = await resIdeas.json();
+        let data = await resIdeas.json();
+        if (!Array.isArray(data)) {
+          data = [];
+        }
         
         // Merge and backup created ideas locally to survive Vercel backend recycling
         const savedIdeas = localStorage.getItem('firjan_local_ideas');
@@ -259,7 +268,17 @@ export default function App() {
             const parsedIdeas = JSON.parse(savedIdeas);
             if (Array.isArray(parsedIdeas)) {
               parsedIdeas.forEach(li => {
-                if (!data.some((id: Idea) => id.id === li.id)) {
+                const idx = data.findIndex((id: Idea) => id.id === li.id);
+                if (idx !== -1) {
+                  // Keep whichever has higher likes, comments or more advanced status
+                  const serverComments = data[idx].comments?.length || 0;
+                  const localComments = li.comments?.length || 0;
+                  const serverLikes = data[idx].likes || 0;
+                  const localLikes = li.likes || 0;
+                  if (localComments >= serverComments || localLikes >= serverLikes || li.status !== 'Em análise') {
+                    data[idx] = { ...data[idx], ...li };
+                  }
+                } else {
                   data.unshift(li); // Place new local ideas on top
                 }
               });
@@ -278,7 +297,44 @@ export default function App() {
     try {
       const resWiki = await fetch(`/api/wiki?t=${Date.now()}`);
       if (resWiki.ok) {
-        const data = await resWiki.json();
+        let data = await resWiki.json();
+        if (!Array.isArray(data)) {
+          data = [];
+        }
+
+        // Merge locally created articles
+        const localArticles = localStorage.getItem('firjan_local_wiki_articles');
+        if (localArticles) {
+          try {
+            const parsedArticles = JSON.parse(localArticles);
+            if (Array.isArray(parsedArticles)) {
+              parsedArticles.forEach(la => {
+                if (!data.some((a: WikiArticle) => a.id === la.id)) {
+                  data.push(la);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge local wiki articles:', e);
+          }
+        }
+
+        // Apply local favorites
+        const localFavs = localStorage.getItem('firjan_local_wiki_favorites');
+        if (localFavs) {
+          try {
+            const parsedFavs = JSON.parse(localFavs);
+            if (Array.isArray(parsedFavs)) {
+              data = data.map((a: WikiArticle) => ({
+                ...a,
+                isFavorite: parsedFavs.includes(a.id) ? true : a.isFavorite
+              }));
+            }
+          } catch (e) {
+            console.error('Failed to apply local favorites:', e);
+          }
+        }
+
         setWikiArticles(data);
       }
     } catch (err) {
@@ -288,7 +344,31 @@ export default function App() {
     try {
       const resIns = await fetch(`/api/insights?t=${Date.now()}`);
       if (resIns.ok) {
-        const data = await resIns.json();
+        let data = await resIns.json();
+        if (!Array.isArray(data)) {
+          data = [];
+        }
+
+        // Merge local operational insights
+        const localInsights = localStorage.getItem('firjan_local_insights');
+        if (localInsights) {
+          try {
+            const parsedInsights = JSON.parse(localInsights);
+            if (Array.isArray(parsedInsights)) {
+              parsedInsights.forEach(li => {
+                const idx = data.findIndex((i: OperationalInsight) => i.id === li.id);
+                if (idx !== -1) {
+                  data[idx] = { ...data[idx], ...li };
+                } else {
+                  data.unshift(li);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge local insights:', e);
+          }
+        }
+
         setOperationalInsights(data);
       }
     } catch (err) {
@@ -298,7 +378,28 @@ export default function App() {
     try {
       const resLogs = await fetch(`/api/audit-events?t=${Date.now()}`);
       if (resLogs.ok) {
-        const data = await resLogs.json();
+        let data = await resLogs.json();
+        if (!Array.isArray(data)) {
+          data = [];
+        }
+
+        // Merge in locally registered logs
+        const localLogs = localStorage.getItem('firjan_local_logs');
+        if (localLogs) {
+          try {
+            const parsedLogs = JSON.parse(localLogs);
+            if (Array.isArray(parsedLogs)) {
+              parsedLogs.forEach(ll => {
+                if (!data.some((l: SystemAuditLog) => l.id === ll.id)) {
+                  data.unshift(ll);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to merge local logs:', e);
+          }
+        }
+
         setAuditLogs(data);
       }
     } catch (err) {
@@ -918,63 +1019,222 @@ export default function App() {
   // 2. Like toggle caller
   const handleLikeIdea = async (ideaId: string) => {
     if (!currentUser) return;
-    await fetch(`/api/ideas/${ideaId}/like`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUser.id,
-        userName: currentUser.name
-      })
-    });
+    try {
+      await fetch(`/api/ideas/${ideaId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userName: currentUser.name
+        })
+      });
+    } catch (e) {
+      console.warn('Network issue during like sync, updating local state only:', e);
+    }
+
+    // Direct local state and localStorage update for instant, Vercel-proof save
+    try {
+      const savedIdeas = localStorage.getItem('firjan_local_ideas');
+      let parsedIdeas: Idea[] = savedIdeas ? JSON.parse(savedIdeas) : [];
+      
+      const currentIdea = ideas.find(i => i.id === ideaId);
+      if (currentIdea) {
+        const isAlreadyLiked = currentIdea.likedBy?.includes(currentUser.id) || false;
+        const updatedLikedBy = isAlreadyLiked 
+          ? (currentIdea.likedBy || []).filter(uid => uid !== currentUser.id)
+          : [...(currentIdea.likedBy || []), currentUser.id];
+        const updatedLikes = isAlreadyLiked ? Math.max(0, currentIdea.likes - 1) : currentIdea.likes + 1;
+        
+        const updatedIdea = {
+          ...currentIdea,
+          likes: updatedLikes,
+          likedBy: updatedLikedBy
+        };
+        
+        const idxInLocal = parsedIdeas.findIndex(i => i.id === ideaId);
+        if (idxInLocal !== -1) {
+          parsedIdeas[idxInLocal] = updatedIdea;
+        } else {
+          parsedIdeas.push(updatedIdea);
+        }
+        localStorage.setItem('firjan_local_ideas', JSON.stringify(parsedIdeas));
+        setIdeas(prev => prev.map(i => i.id === ideaId ? updatedIdea : i));
+      }
+    } catch (err) {
+      console.error('Failed to update local like tracking:', err);
+    }
+    
     fetchState();
   };
 
   // 3. Comments caller
   const handleCommentIdea = async (ideaId: string, commentText: string) => {
     if (!currentUser) return;
-    await fetch(`/api/ideas/${ideaId}/comment`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUser.id,
-        userName: currentUser.name,
+    try {
+      await fetch(`/api/ideas/${ideaId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userName: currentUser.name,
+          authorName: currentUser.name,
+          text: commentText
+        })
+      });
+    } catch (e) {
+      console.warn('Network issue during comment sync, local update is primary:', e);
+    }
+
+    // Direct local comment insertion
+    try {
+      const newComment = {
+        id: `comment_${Date.now()}`,
+        authorId: currentUser.id,
         authorName: currentUser.name,
-        text: commentText
-      })
-    });
+        text: commentText,
+        createdAt: new Date().toISOString()
+      };
+      
+      const savedIdeas = localStorage.getItem('firjan_local_ideas');
+      let parsedIdeas: Idea[] = savedIdeas ? JSON.parse(savedIdeas) : [];
+      
+      const currentIdea = ideas.find(i => i.id === ideaId);
+      if (currentIdea) {
+        const updatedIdea = {
+          ...currentIdea,
+          comments: [...(currentIdea.comments || []), newComment]
+        };
+        
+        const idxInLocal = parsedIdeas.findIndex(i => i.id === ideaId);
+        if (idxInLocal !== -1) {
+          parsedIdeas[idxInLocal] = updatedIdea;
+        } else {
+          parsedIdeas.push(updatedIdea);
+        }
+        localStorage.setItem('firjan_local_ideas', JSON.stringify(parsedIdeas));
+        setIdeas(prev => prev.map(i => i.id === ideaId ? updatedIdea : i));
+      }
+    } catch (err) {
+      console.error('Failed to update local comment tracking:', err);
+    }
+
     fetchState();
   };
 
   // 3.5 Status Update & Leaders Approval Flow Caller
   const handleUpdateIdeaStatus = async (ideaId: string, status: string, pointsRewarded: number, stageComments?: string) => {
     if (!currentUser) return;
-    await fetch(`/api/ideas/${ideaId}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status,
-        userId: currentUser.id,
-        userName: currentUser.name,
-        pointsRewarded,
-        stageComments
-      })
-    });
-    
-    // Reload user details so updated points credits display
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ simulatedUserId: currentUser.id })
-    });
-    const data = await res.json();
-    if (data.success) {
-      setCurrentUser(data.user);
+    try {
+      await fetch(`/api/ideas/${ideaId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status,
+          userId: currentUser.id,
+          userName: currentUser.name,
+          pointsRewarded,
+          stageComments
+        })
+      });
+    } catch (e) {
+      console.warn('Network issue during approval sync:', e);
+    }
+
+    // Direct local state and status update for persistence
+    try {
+      const savedIdeas = localStorage.getItem('firjan_local_ideas');
+      let parsedIdeas: Idea[] = savedIdeas ? JSON.parse(savedIdeas) : [];
+      
+      const currentIdea = ideas.find(i => i.id === ideaId);
+      if (currentIdea) {
+        let updatedApprovalHistory = [...(currentIdea.approvalHistory || [])];
+        let currentStage = currentIdea.currentStage || 1;
+        
+        if (status === 'Aprovada') {
+          currentStage = Math.min(4, currentStage + 1);
+          const stageIdx = updatedApprovalHistory.findIndex(h => h.stageId === currentStage - 1);
+          if (stageIdx !== -1) {
+            updatedApprovalHistory[stageIdx] = {
+              ...updatedApprovalHistory[stageIdx],
+              approver: currentUser.name,
+              action: 'approved',
+              date: new Date().toLocaleDateString('pt-BR'),
+              comment: stageComments || 'Aprovada para implementação pelo comitê regional.'
+            };
+          }
+        } else if (status === 'Rejeitada') {
+          const stageIdx = updatedApprovalHistory.findIndex(h => h.stageId === currentStage);
+          if (stageIdx !== -1) {
+            updatedApprovalHistory[stageIdx] = {
+              ...updatedApprovalHistory[stageIdx],
+              approver: currentUser.name,
+              action: 'rejected',
+              date: new Date().toLocaleDateString('pt-BR'),
+              comment: stageComments || 'Recusada.'
+            };
+          }
+        }
+        
+        const nextStatus = currentStage === 4 ? 'Aprovada para Implementação' : status === 'Rejeitada' ? 'Recusada' : 'Em análise';
+        
+        const updatedIdea: Idea = {
+          ...currentIdea,
+          status: nextStatus,
+          currentStage,
+          approvalHistory: updatedApprovalHistory,
+          pointsRewarded: (currentIdea.pointsRewarded || 0) + (pointsRewarded || 0)
+        };
+        
+        const idxInLocal = parsedIdeas.findIndex(i => i.id === ideaId);
+        if (idxInLocal !== -1) {
+          parsedIdeas[idxInLocal] = updatedIdea;
+        } else {
+          parsedIdeas.push(updatedIdea);
+        }
+        localStorage.setItem('firjan_local_ideas', JSON.stringify(parsedIdeas));
+        setIdeas(prev => prev.map(i => i.id === ideaId ? updatedIdea : i));
+
+        // Credit points to caller's representation also if they are the author
+        if (currentUser.id === currentIdea.authorId && pointsRewarded > 0) {
+          const updatedUser = { ...currentUser, points: currentUser.points + pointsRewarded };
+          setCurrentUser(updatedUser);
+          localStorage.setItem('firjan_connected_user', JSON.stringify(updatedUser));
+          
+          // Save in local users list too
+          const localRegList = localStorage.getItem('firjan_local_users');
+          let parsedLocalUsers: UserProfile[] = localRegList ? JSON.parse(localRegList) : [];
+          const uIdx = parsedLocalUsers.findIndex(u => u.id === currentUser.id);
+          if (uIdx !== -1) {
+            parsedLocalUsers[uIdx] = updatedUser;
+          } else {
+            parsedLocalUsers.push(updatedUser);
+          }
+          localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocalUsers));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update local idea workflow state:', err);
     }
     
-    // Reload users list with cache-breaker
-    fetch(`/api/auth/users?t=${Date.now()}`)
-      .then(r => r.json())
-      .then(data => setSimulatedUsers(data));
+    // Attempt backend sync
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ simulatedUserId: currentUser.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentUser(data.user);
+        localStorage.setItem('firjan_connected_user', JSON.stringify(data.user));
+      }
+    } catch (e) {}
+    
+    try {
+      fetch(`/api/auth/users?t=${Date.now()}`)
+        .then(r => r.json())
+        .then(data => setSimulatedUsers(data));
+    } catch (e) {}
 
     fetchState();
   };
@@ -982,6 +1242,16 @@ export default function App() {
   // Points Redemption direct store caller
   const handleRedeemReward = async (itemId: string, itemPrice: number, itemName: string) => {
     if (!currentUser) return { success: false, error: 'Usuário desconectado.' };
+    
+    // Simulate/verify points locally first
+    if (currentUser.points < itemPrice) {
+      return { success: false, error: `Saldo insuficiente. Você possui ${currentUser.points} pts e este brinde custa ${itemPrice} pts.` };
+    }
+
+    let serverSuccess = false;
+    let computedPoints = currentUser.points - itemPrice;
+    let serverVoucher = `FIRJAN-${Math.floor(1000 + Math.random() * 9000)}-${currentUser.id.toUpperCase().split('_')[1] || 'VOUCHER'}`;
+
     try {
       const res = await fetch('/api/auth/redeem', {
         method: 'POST',
@@ -995,43 +1265,118 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        // sync user points representation locally
-        setCurrentUser(prev => prev ? { ...prev, points: data.updatedPoints } : null);
-        return { success: true, voucher: data.voucher };
-      } else {
-        return { success: false, error: data.error || 'Erro ao processar resgate no servidor.' };
+        computedPoints = data.updatedPoints;
+        serverVoucher = data.voucher;
+        serverSuccess = true;
       }
     } catch (err) {
-      return { success: false, error: 'Falha temporária de comunicação com o servidor de prêmios.' };
+      console.warn('Network issue during reward redemption, completing locally:', err);
     }
+
+    // Direct local state and localStorage update for points redemption
+    try {
+      const updatedUser = { ...currentUser, points: computedPoints };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('firjan_connected_user', JSON.stringify(updatedUser));
+
+      // Sync into local users list
+      const localRegList = localStorage.getItem('firjan_local_users');
+      let parsedLocalUsers: UserProfile[] = localRegList ? JSON.parse(localRegList) : [];
+      const uIdx = parsedLocalUsers.findIndex(u => u.id === currentUser.id);
+      if (uIdx !== -1) {
+        parsedLocalUsers[uIdx] = updatedUser;
+      } else {
+        parsedLocalUsers.push(updatedUser);
+      }
+      localStorage.setItem('firjan_local_users', JSON.stringify(parsedLocalUsers));
+    } catch (e) {
+      console.error('Failed to update local points representation:', e);
+    }
+
+    fetchState();
+    return { success: true, voucher: serverVoucher };
   };
 
   // Wiki Directory Favorite caller
   const handleFavoriteWiki = async (articleId: string) => {
     if (!currentUser) return;
-    await fetch(`/api/wiki/${articleId}/favorite`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUser.id,
-        userName: currentUser.name
-      })
-    });
+    try {
+      await fetch(`/api/wiki/${articleId}/favorite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userName: currentUser.name
+        })
+      });
+    } catch (e) {
+      console.warn('Network issue during wiki favorites sync:', e);
+    }
+
+    // Direct local state and localStorage update for favorites list
+    try {
+      const localFavs = localStorage.getItem('firjan_local_wiki_favorites');
+      let parsedFavs: string[] = localFavs ? JSON.parse(localFavs) : [];
+      
+      if (parsedFavs.includes(articleId)) {
+        parsedFavs = parsedFavs.filter(id => id !== articleId);
+      } else {
+        parsedFavs.push(articleId);
+      }
+      localStorage.setItem('firjan_local_wiki_favorites', JSON.stringify(parsedFavs));
+
+      setWikiArticles(prev => prev.map(a => a.id === articleId ? { ...a, isFavorite: parsedFavs.includes(articleId) } : a));
+    } catch (err) {
+      console.error('Failed to update local wiki favorites:', err);
+    }
+
     fetchState();
   };
 
   // Submit custom article wiki
   const handleSubmitWikiArticle = async (artData: any) => {
     if (!currentUser) return;
-    await fetch('/api/wiki', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...artData,
-        userId: currentUser.id,
-        userName: currentUser.name
-      })
-    });
+    let createdArticle = {
+      ...artData,
+      id: `wiki_${Date.now()}`,
+      authorId: currentUser.id,
+      authorName: currentUser.name,
+      createdAt: new Date().toLocaleDateString('pt-BR'),
+      isFavorite: false,
+      likes: 0
+    };
+
+    try {
+      const res = await fetch('/api/wiki', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...artData,
+          userId: currentUser.id,
+          userName: currentUser.name
+        })
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body && body.id) {
+          createdArticle = body;
+        }
+      }
+    } catch (e) {
+      console.warn('Network issue during custom wiki article submission:', e);
+    }
+
+    // Direct local article storage
+    try {
+      const localArticles = localStorage.getItem('firjan_local_wiki_articles');
+      let parsedArticles = localArticles ? JSON.parse(localArticles) : [];
+      if (!Array.isArray(parsedArticles)) parsedArticles = [];
+      parsedArticles.push(createdArticle);
+      localStorage.setItem('firjan_local_wiki_articles', JSON.stringify(parsedArticles));
+    } catch (err) {
+      console.error('Failed to update local wiki articles:', err);
+    }
+
     fetchState();
   };
 
@@ -1072,28 +1417,92 @@ export default function App() {
   // Handle manual additions to Efficiency Bottlenecks lists
   const handleAddOperationalBottleneck = async (insightData: any) => {
     if (!currentUser) return;
-    await fetch('/api/insights', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...insightData,
-        userId: currentUser.id,
-        userName: currentUser.name
-      })
-    });
+    let newInsight = {
+      ...insightData,
+      id: `insight_${Date.now()}`,
+      status: 'Pendente',
+      reporterId: currentUser.id,
+      reporterName: currentUser.name,
+      reporterDept: currentUser.department || 'Operacional',
+      createdAt: new Date().toLocaleDateString('pt-BR'),
+      resolvedAt: null,
+      resolvedBy: null
+    };
+
+    try {
+      const res = await fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...insightData,
+          userId: currentUser.id,
+          userName: currentUser.name
+        })
+      });
+      if (res.ok) {
+        const body = await res.json();
+        if (body && body.id) {
+          newInsight = body;
+        }
+      }
+    } catch (e) {
+      console.warn('Network issue during insight sync:', e);
+    }
+
+    try {
+      const localInsights = localStorage.getItem('firjan_local_insights');
+      let parsedInsights = localInsights ? JSON.parse(localInsights) : [];
+      if (!Array.isArray(parsedInsights)) parsedInsights = [];
+      parsedInsights.unshift(newInsight);
+      localStorage.setItem('firjan_local_insights', JSON.stringify(parsedInsights));
+    } catch (err) {
+      console.error('Failed to update local insights:', err);
+    }
+
     fetchState();
   };
 
   const handleResolveOperationalInsight = async (insightId: string) => {
     if (!currentUser) return;
-    await fetch(`/api/insights/${insightId}/resolve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUser.id,
-        userName: currentUser.name
-      })
-    });
+    try {
+      await fetch(`/api/insights/${insightId}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userName: currentUser.name
+        })
+      });
+    } catch (e) {
+      console.warn('Network issue during insight resolution:', e);
+    }
+
+    try {
+      const localInsights = localStorage.getItem('firjan_local_insights');
+      let parsedInsights: any[] = localInsights ? JSON.parse(localInsights) : [];
+      
+      const currentInsight = operationalInsights.find(i => i.id === insightId);
+      if (currentInsight) {
+        const updatedInsight = {
+          ...currentInsight,
+          status: 'Resolvido',
+          resolvedAt: new Date().toLocaleDateString('pt-BR'),
+          resolvedBy: currentUser.name
+        };
+        
+        const idx = parsedInsights.findIndex(i => i.id === insightId);
+        if (idx !== -1) {
+          parsedInsights[idx] = updatedInsight;
+        } else {
+          parsedInsights.push(updatedInsight);
+        }
+        localStorage.setItem('firjan_local_insights', JSON.stringify(parsedInsights));
+        setOperationalInsights(prev => prev.map(i => i.id === insightId ? updatedInsight : i));
+      }
+    } catch (err) {
+      console.error('Failed to update local resolved insight:', err);
+    }
+
     fetchState();
   };
 
@@ -2225,6 +2634,7 @@ export default function App() {
         settings={accessibility} 
         onChange={setAccessibility}
         onVoiceCommandTrigger={handleVoiceCommandNavigation}
+        activeTab={activeTab}
       />
 
     </div>

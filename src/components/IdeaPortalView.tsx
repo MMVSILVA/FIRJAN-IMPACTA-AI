@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import * as XLSX from 'xlsx';
 import { 
   Lightbulb, 
@@ -689,7 +690,18 @@ export default function IdeaPortalView({
           </div>
 
           {/* Feed of ideas */}
-          <div className="space-y-5">
+          <motion.div 
+            className="space-y-5"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.05 }
+              }
+            }}
+          >
             {filteredIdeas.length === 0 ? (
               <div className="glass-panel p-10 rounded-xl border-zinc-800 text-center text-zinc-400 space-y-2">
                 <Lightbulb className="w-10 h-10 text-zinc-750 mx-auto" />
@@ -708,9 +720,19 @@ export default function IdeaPortalView({
                                     currentUser.role === 'Super Admin';
 
                 return (
-                  <div 
+                  <motion.div 
                     key={idea.id} 
-                    className="glass-panel p-5 rounded-xl border-zinc-850 space-y-4 hover:border-zinc-700/60 transition-all text-left"
+                    variants={{
+                      hidden: { opacity: 0, y: 15 },
+                      visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 14 } }
+                    }}
+                    whileHover={{ 
+                      y: -4, 
+                      scale: 1.006, 
+                      borderColor: "rgba(139, 92, 246, 0.45)", 
+                      boxShadow: "0 10px 25px -10px rgba(0,0,0,0.75)" 
+                    }}
+                    className="glass-panel p-5 rounded-xl border-zinc-850 space-y-4 hover:border-zinc-700/60 transition-all text-left cursor-pointer"
                   >
                     {/* Upper Line Header */}
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-2 border-b border-zinc-900 pb-3">
@@ -1133,11 +1155,11 @@ export default function IdeaPortalView({
                       </div>
                     )}
 
-                  </div>
+                  </motion.div>
                 );
               })
             )}
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -1369,13 +1391,37 @@ export default function IdeaPortalView({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.05 }
+                  }
+                }}
+              >
                 {REWARDS.map(reward => {
                   const isEligible = currentUser.points >= reward.points;
                   const ratio = Math.min(Math.round((currentUser.points / reward.points) * 100), 100);
 
                   return (
-                    <div key={reward.id} className="p-4 rounded-xl border border-zinc-850 bg-zinc-950/40 space-y-3.5 flex flex-col justify-between">
+                    <motion.div 
+                      key={reward.id} 
+                      variants={{
+                        hidden: { opacity: 0, y: 15 },
+                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 110, damping: 15 } }
+                      }}
+                      whileHover={{ 
+                        y: -5, 
+                        scale: 1.015,
+                        borderColor: "rgba(234, 179, 8, 0.45)",
+                        boxShadow: "0 12px 25px -10px rgba(0,0,0,0.8)"
+                      }}
+                      className="p-4 rounded-xl border border-zinc-850 bg-zinc-950/40 space-y-3.5 flex flex-col justify-between transition-colors duration-250 hover:bg-zinc-900/10 cursor-pointer"
+                    >
                       <div className="space-y-1">
                         <div className="flex justify-between items-start">
                           <span className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded font-mono uppercase font-bold">
@@ -1418,10 +1464,10 @@ export default function IdeaPortalView({
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
-              </div>
+              </motion.div>
             </div>
 
             {/* Right Side: Gamified Leaderboard users & cupom wallet */}

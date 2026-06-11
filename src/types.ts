@@ -82,6 +82,7 @@ export interface Idea {
   priority?: string;
   attachments?: string[];
   intelligentScore?: number;
+  unitName?: string;
 }
 
 export interface OnboardingStep {
@@ -99,6 +100,7 @@ export interface WikiArticle {
   title: string;
   content: string;
   category: string;
+  department?: string;
   tags: string[];
   favoritesCount: number;
   isFavorite?: boolean;

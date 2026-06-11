@@ -147,7 +147,7 @@ app.post('/api/auth/login', async (req, res, next) => {
         password: password || 'firjan123',
         role: 'Colaborador',
         department: 'Geral',
-        points: 100, // Initial onboarding bonus
+        points: 0, // Starts with zero as requested, grows with ideas
         badges: ['Inovador Iniciante'],
         avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80`,
         mfaEnabled: false

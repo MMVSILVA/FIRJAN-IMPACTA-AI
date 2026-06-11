@@ -30,6 +30,7 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
   const [tags, setTags] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [articleDept, setArticleDept] = useState('Geral');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
@@ -38,6 +39,15 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
     'Processos',
     'Educação',
     'Tecnologia'
+  ];
+
+  const DEPARTMENTS = [
+    'Inovação, TI e Transformação Digital',
+    'Suporte Operacional e Produção',
+    'Planejamento Estratégico',
+    'Recursos Humanos & Desenvolvimento',
+    'Presidência e TI Central',
+    'Geral'
   ];
 
   const handleCreateArticle = async (e: React.FormEvent) => {
@@ -52,12 +62,14 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
         content,
         category,
         tags: parsedTags,
-        excerpt: excerpt || content.slice(0, 100) + '...'
+        excerpt: excerpt || content.slice(0, 100) + '...',
+        department: articleDept
       });
       setTitle('');
       setTags('');
       setContent('');
       setExcerpt('');
+      setArticleDept('Geral');
       setShowAddForm(false);
     } catch (err) {
       console.error(err);
@@ -80,10 +92,21 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
     }
   };
 
+  const getArticleDept = (art: WikiArticle) => {
+    if (art.department) return art.department;
+    if (art.category === 'Institucional') return 'Presidência e TI Central';
+    if (art.category === 'Processos') return 'Suporte Operacional e Produção';
+    if (art.category === 'Educação') return 'Planejamento Estratégico';
+    if (art.category === 'Tecnologia') return 'Inovação, TI e Transformação Digital';
+    return 'Geral';
+  };
+
   const filteredArticles = articles.filter(art => {
+    const dept = getArticleDept(art);
     const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           art.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          art.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+                          art.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          dept.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'Todas' || art.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -95,7 +118,7 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
           <h2 className="text-xl font-bold font-display text-white flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-purple-400" /> Central de Conhecimento
           </h2>
-          <p className="text-xs text-zinc-400">Políticas, manuais SENAI/SESI e fluxogramas estratégicos consolidados.</p>
+          <p className="text-xs text-zinc-400">Políticas, manuais SENAI/SESI e fluxogramas estratégicos consolidados com pesquisa por setor.</p>
         </div>
         {!showAddForm && (
           <button
@@ -103,7 +126,7 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
             onClick={() => setShowAddForm(true)}
             className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-lg"
           >
-            <Plus className="w-4 h-4" /> Registrar Manual (+40 pts)
+            <Plus className="w-4 h-4" /> Registrar Manual (+100 pts)
           </button>
         )}
       </div>
@@ -151,16 +174,32 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400">Tags de Pesquisa Separadas Por Vírgula</label>
-              <input
-                id="input_wiki_tags"
-                type="text"
-                placeholder="Ex: reembolso, sap, viagem, finanças"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-650 focus:outline-none focus:border-purple-500"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Tags de Pesquisa Separadas Por Vírgula</label>
+                <input
+                  id="input_wiki_tags"
+                  type="text"
+                  placeholder="Ex: reembolso, sap, viagem, finanças"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-650 focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-400">Departamento Associado</label>
+                <select
+                  id="select_wiki_dept"
+                  value={articleDept}
+                  onChange={(e) => setArticleDept(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-purple-500"
+                >
+                  {DEPARTMENTS.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -209,7 +248,7 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
           <input
             id="search_wiki_input"
             type="text"
-            placeholder="Pesquisa semântica de procedimentos (tags, título)..."
+            placeholder="Buscar por título, tags ou departamento (ex: TI, Financeiro)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl pl-9 pr-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-purple-500"
@@ -235,31 +274,34 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Left Side: Article Titles List */}
-        <div className="md:col-span-1 space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
+        <div className="md:col-span-1 space-y-2.5 max-h-[500px] overflow-y-auto pr-1 pagination-container">
           <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono font-semibold block px-1">Artigos Disponíveis ({filteredArticles.length})</span>
-          {filteredArticles.map((art) => (
-            <button
-              id={`wiki_item_trigger_${art.id}`}
-              key={art.id}
-              onClick={() => setActiveArticleId(activeArticleId === art.id ? null : art.id)}
-              className={`w-full text-left p-3 rounded-lg border transition-all block ${
-                activeArticleId === art.id 
-                  ? 'bg-purple-950/25 border-purple-500 text-white' 
-                  : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 text-zinc-300'
-              }`}
-            >
-              <div className="flex justify-between items-start gap-1">
-                <span className="text-xs font-semibold block leading-tight">{art.title}</span>
-                {art.isFavorite && <Star className="w-3.5 h-3.5 text-yellow-500 shrink-0 fill-yellow-500" />}
-              </div>
-              <p className="text-[10px] text-zinc-500 truncate mt-1 leading-normal">{art.excerpt}</p>
-              
-              <div className="flex justify-between items-center text-[9px] text-zinc-500 mt-2">
-                <span className="bg-black/30 px-1.5 py-0.5 rounded font-mono text-[8px]">{art.category}</span>
-                <span>⭐ {art.favoritesCount} favoritaram</span>
-              </div>
-            </button>
-          ))}
+          {filteredArticles.map((art) => {
+            const articleDeptName = getArticleDept(art);
+            return (
+              <button
+                id={`wiki_item_trigger_${art.id}`}
+                key={art.id}
+                onClick={() => setActiveArticleId(activeArticleId === art.id ? null : art.id)}
+                className={`w-full text-left p-3 rounded-lg border transition-all block ${
+                  activeArticleId === art.id 
+                    ? 'bg-purple-950/25 border-purple-500 text-white' 
+                    : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 text-zinc-300'
+                }`}
+              >
+                <div className="flex justify-between items-start gap-1">
+                  <span className="text-xs font-semibold block leading-tight">{art.title}</span>
+                  {art.isFavorite && <Star className="w-3.5 h-3.5 text-yellow-500 shrink-0 fill-yellow-500" />}
+                </div>
+                <p className="text-[10px] text-zinc-500 truncate mt-1 leading-normal">{art.excerpt}</p>
+                
+                <div className="flex flex-wrap items-center gap-1.5 text-[8px] mt-2">
+                  <span className="bg-purple-950/40 text-purple-300 border border-purple-900/40 px-1.5 py-0.5 rounded font-mono uppercase">{art.category}</span>
+                  <span className="bg-zinc-950 text-zinc-400 border border-zinc-850 px-1.5 py-0.5 rounded font-mono truncate max-w-[130px]" title={articleDeptName}>{articleDeptName}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Right Side: Active Article Detailed Content */}
@@ -268,15 +310,18 @@ export default function WikiView({ articles, onSubmitArticle, onFavoriteArticle 
             (() => {
               const art = articles.find(a => a.id === activeArticleId);
               if (!art) return null;
+              const articleDeptName = getArticleDept(art);
               return (
                 <div className="glass-panel p-5 rounded-xl border-zinc-800/80 space-y-4 animate-in fade-in text-left">
                   <div className="flex justify-between items-start border-b border-zinc-900 pb-3">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-purple-500/10 text-purple-300 font-mono text-[9px] px-2 py-0.5 rounded border border-purple-500/10">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="bg-purple-500/10 text-purple-300 font-mono text-[9px] px-2 py-0.5 rounded border border-purple-500/100">
                           {art.category}
                         </span>
-                        <span>•</span>
+                        <span className="bg-zinc-900 text-zinc-300 font-mono text-[9px] px-2 py-0.5 rounded border border-zinc-800">
+                          🏢 {articleDeptName}
+                        </span>
                         <span className="text-[10px] text-zinc-500">Publicado em {new Date(art.createdAt).toLocaleDateString()}</span>
                       </div>
                       <h3 className="text-lg font-bold font-display text-white">
