@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { 
   Building2, 
   Lightbulb, 
@@ -71,6 +71,68 @@ export default function DashboardView({
   // Analytical Calculations
   const totalIdeas = ideas.length;
   const approvedIdeas = ideas.filter(i => i.status === 'Aprovado' || i.status === 'Em implementação' || i.status === 'Finalizado').length;
+  
+  // Generate historical cumulative savings data for Recharts
+  const historicalSavingsData = React.useMemo(() => {
+    const approvedList = ideas.filter(i => i.status === 'Aprovado' || i.status === 'Em implementação' || i.status === 'Finalizado');
+    
+    const sortedApproved = [...approvedList].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    });
+
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const currentMonthIdx = new Date().getMonth();
+    
+    const monthlySavingsMap: { [key: number]: number } = {};
+    const monthlyCountMap: { [key: number]: number } = {};
+    
+    sortedApproved.forEach(idea => {
+      let mGroup = currentMonthIdx;
+      if (idea.createdAt) {
+        const dateObj = new Date(idea.createdAt);
+        if (!isNaN(dateObj.getTime())) {
+          mGroup = dateObj.getMonth();
+        }
+      }
+      
+      let val = 40000;
+      if (idea.aiReview?.operationalSaving) {
+        const extracted = parseInt(idea.aiReview.operationalSaving.replace(/[^0-9]/g, ''), 10);
+        if (!isNaN(extracted)) val = extracted;
+      } else if (idea.financialEstimate) {
+        val = idea.financialEstimate;
+      }
+      
+      monthlySavingsMap[mGroup] = (monthlySavingsMap[mGroup] || 0) + val;
+      monthlyCountMap[mGroup] = (monthlyCountMap[mGroup] || 0) + 1;
+    });
+
+    const data: { name: string; economia: number; acumulado: number; ideias: number }[] = [];
+    let runningSum = 0;
+    let runningIdeas = 0;
+    
+    const startMonth = Math.max(0, currentMonthIdx - 5);
+    for (let i = startMonth; i <= currentMonthIdx; i++) {
+      const monthName = months[i];
+      const monthSavings = monthlySavingsMap[i] || 0;
+      const monthIdeasCount = monthlyCountMap[i] || 0;
+      
+      const monthlyValue = monthSavings + (approvedList.length === 0 ? 30000 : 0);
+      runningSum += monthlyValue;
+      runningIdeas += monthIdeasCount + (approvedList.length === 0 ? 1 : 0);
+
+      data.push({
+        name: monthName,
+        economia: monthlyValue,
+        acumulado: runningSum,
+        ideias: runningIdeas
+      });
+    }
+    
+    return data;
+  }, [ideas]);
   
   // Calculate simulated financial economy from ideas
   const totalSavings = ideas
@@ -903,70 +965,82 @@ export default function DashboardView({
           {/* Core Analytics charts & Department summary */}
           <motion.div variants={cardVariants} className="grid grid-cols-1 md:grid-cols-4 gap-5">
             
-            {/* SVG Analytics Chart Card */}
+            {/* SVG Analytics Chart Card replaced with Recharts AreaChart */}
             <div className="glass-panel p-5 rounded-xl border-zinc-850 md:col-span-2 space-y-4 text-left">
               <div className="flex items-center justify-between pb-2 border-b border-zinc-900">
                 <div className="space-y-0.5">
                   <h3 className="text-xs font-bold text-white uppercase tracking-wider font-display">
-                    Retorno Operacional de Fomento (ROI)
+                    Retorno Operacional de Fomento (ROI) - Recharts
                   </h3>
                   <p className="text-[10px] text-zinc-500">Desenvolvimento de ideias aceitas e economia trimestral acumulada</p>
                 </div>
                 <div className="flex gap-3 text-[9px] font-mono">
                   <span className="flex items-center gap-1.5 text-zinc-400">
-                    <span className="w-2 h-2 bg-purple-500 rounded-full inline-block" /> Economia (R$)
+                    <span className="w-2 h-2 bg-[#003399] rounded-full inline-block" /> Acumulado (R$)
                   </span>
                   <span className="flex items-center gap-1.5 text-zinc-400">
-                    <span className="w-2 h-2 bg-green-500 rounded-full inline-block" /> Submissões
+                    <span className="w-2 h-2 bg-[#10B981] rounded-full inline-block" /> Mensal (R$)
                   </span>
                 </div>
               </div>
 
-              {/* Responsive custom SVG Area Chart */}
-              <div className="w-full h-48 relative bg-zinc-950/70 rounded-lg p-2.5 border border-zinc-900">
-                <svg viewBox="0 0 500 200" className="w-full h-full overflow-visible">
-                  {/* Grid Lines */}
-                  <line x1="40" y1="20" x2="480" y2="20" stroke="rgba(255,255,255,0.02)" />
-                  <line x1="40" y1="65" x2="480" y2="65" stroke="rgba(255,255,255,0.02)" />
-                  <line x1="40" y1="110" x2="480" y2="110" stroke="rgba(255,255,255,0.02)" />
-                  <line x1="40" y1="155" x2="480" y2="155" stroke="rgba(255,255,255,0.04)" />
-
-                  <defs>
-                    <linearGradient id="purpleGrad2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#a855f7" stopOpacity="0.2" />
-                      <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
-                    </linearGradient>
-                    <linearGradient id="greenGrad2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22c55e" stopOpacity="0.1" />
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity="0.0" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Area graphs */}
-                  <path d="M 40 155 Q 120 125, 200 95 T 360 55 T 480 32 L 480 155 Z" fill="url(#purpleGrad2)" />
-                  <path d="M 40 155 Q 120 125, 200 95 T 360 55 T 480 32" fill="none" stroke="#a855f7" strokeWidth="2.5" />
-
-                  <path d="M 40 155 Q 120 148, 200 130 T 360 100 T 480 75 L 480 155 Z" fill="url(#greenGrad2)" />
-                  <path d="M 40 155 Q 120 148, 200 130 T 360 100 T 480 75" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeDasharray="3 2" />
-
-                  {/* Intersect points */}
-                  <circle cx="200" cy="95" r="3.5" fill="#a855f7" />
-                  <circle cx="360" cy="55" r="3.5" fill="#a855f7" />
-                  <circle cx="480" cy="32" r="4" fill="#22c55e" />
-
-                  {/* X Axis Texts */}
-                  <text x="40" y="175" fill="#52525b" fontSize="8" textAnchor="middle">Mar</text>
-                  <text x="150" y="175" fill="#52525b" fontSize="8" textAnchor="middle">Abr</text>
-                  <text x="280" y="175" fill="#52525b" fontSize="8" textAnchor="middle">Mai (Corrente)</text>
-                  <text x="400" y="175" fill="#52525b" fontSize="8" textAnchor="middle">Junho</text>
-                  <text x="480" y="175" fill="#52525b" fontSize="8" textAnchor="end">Projeção 2026</text>
-
-                  {/* Y Axis values */}
-                  <text x="32" y="24" fill="#3f3f46" fontSize="7" textAnchor="end">R$ 500k</text>
-                  <text x="32" y="68" fill="#3f3f46" fontSize="7" textAnchor="end">R$ 250k</text>
-                  <text x="32" y="113" fill="#3f3f46" fontSize="7" textAnchor="end">R$ 100k</text>
-                  <text x="32" y="158" fill="#3f3f46" fontSize="7" textAnchor="end">0</text>
-                </svg>
+              {/* Responsive Recharts Area Chart */}
+              <div className="w-full h-48 relative rounded-lg p-1 bg-zinc-950/40 border border-zinc-900">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={historicalSavingsData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorAcumulado" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#003399" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#003399" stopOpacity={0.0} />
+                      </linearGradient>
+                      <linearGradient id="colorMensal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" vertical={false} />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#94A3B8" 
+                      fontSize={9} 
+                      tickLine={false} 
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="#94A3B8" 
+                      fontSize={8} 
+                      tickLine={false} 
+                      axisLine={false}
+                      tickFormatter={(v) => `R$ ${v >= 1000 ? (v / 1000) + 'k' : v}`}
+                    />
+                    <RechartsTooltip 
+                      formatter={(v: any, name: string) => {
+                        if (name === "acumulado") return [`R$ ${Number(v).toLocaleString('pt-BR')}`, 'Total Acumulado'];
+                        if (name === "economia") return [`R$ ${Number(v).toLocaleString('pt-BR')}`, 'Média Mensal'];
+                        return [v, name];
+                      }}
+                      contentStyle={{ backgroundColor: '#09090b', borderColor: '#1c1c1f', borderRadius: '8px' }}
+                      itemStyle={{ color: '#ffffff', fontSize: '10px', fontFamily: 'monospace' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="acumulado" 
+                      stroke="#003399" 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill="url(#colorAcumulado)" 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="economia" 
+                      stroke="#10B981" 
+                      strokeWidth={1.5} 
+                      strokeDasharray="4 4"
+                      fillOpacity={1} 
+                      fill="url(#colorMensal)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
 

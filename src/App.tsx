@@ -36,7 +36,6 @@ import EfficiencyView from './components/EfficiencyView';
 import AdminView from './components/AdminView';
 import AccessibilityToolbar from './components/AccessibilityToolbar';
 import UserMedals from './components/UserMedals';
-import { FirjanLogo } from './components/FirjanLogo';
 
 import { 
   Idea, 
@@ -51,18 +50,8 @@ import {
 import { ESTADOS, UNIDADES_SENAI, UNIDADES_SESI, CARGOS_FUNCIONAIS } from './data/brazilData';
 
 export default function App() {
-  // Current user / profile state
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('firjan_connected_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  });
+  // Current user / profile state - Always starts on the login screen upon app load
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [simulatedUsers, setSimulatedUsers] = useState<UserProfile[]>([]);
@@ -1534,22 +1523,21 @@ export default function App() {
   // Render the Login screen if not connected
   if (!currentUser) {
     return (
-      <div className={`min-h-screen bg-black text-zinc-100 flex flex-col justify-between p-4 selection:bg-purple-500/30 relative overflow-x-hidden textSize-${accessibility.fontSize}`}>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.06),transparent_60%)] pointer-events-none" />
+      <div className={`min-h-screen bg-zinc-90 w-full flex flex-col justify-between p-4 selection:bg-purple-900/25 relative overflow-x-hidden text-zinc-800 textSize-${accessibility.fontSize}`}>
         
         {/* Nav header of Login */}
-        <header className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center py-6 px-4 relative z-10 border-b border-zinc-900/60 mb-4">
+        <header className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center py-6 px-4 relative z-10 border-b border-zinc-200 mb-4 bg-white/50 backdrop-blur rounded-xl">
           <div className="flex justify-center md:justify-start items-center w-full">
             <img 
-              src="/impacta_logo.png" 
-              alt="Impacta AI Logo" 
-              className="h-auto w-full max-w-[340px] sm:max-w-[400px] md:max-w-[460px] lg:max-w-[500px] object-contain transition-transform duration-300 hover:scale-[1.03]"
-              referrerPolicy="no-referrer"
+               src="/impacta_logo.png" 
+               alt="Ide.IA Logo" 
+               className="h-auto w-full max-w-[720px] object-contain transition-transform duration-300 hover:scale-[1.03] mix-blend-multiply"
+               referrerPolicy="no-referrer"
             />
           </div>
           
           <div className="text-center md:text-right px-2">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black tracking-tight font-display text-transparent bg-clip-text bg-gradient-to-r from-zinc-50 via-zinc-200 to-zinc-400 leading-tight">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight font-display text-[#003399] leading-tight">
               Plataforma Institucional de Inteligência Operacional Contínua baseada em IA
             </h1>
           </div>
@@ -1557,12 +1545,17 @@ export default function App() {
 
         {/* Central Card */}
         <main className="flex-1 flex items-center justify-center relative z-10 py-8">
-          <div className="w-full max-w-md glass-panel p-6 sm:p-8 rounded-2xl border-purple-500/15 shadow-2xl space-y-5 bg-zinc-950/90">
+          <div className="w-full max-w-md glass-panel p-6 sm:p-8 rounded-2xl border-zinc-200 shadow-xl space-y-5 bg-white">
             
             {/* Header info switcher */}
             <div className="text-center space-y-3">
               <div className="py-2 flex items-center justify-center">
-                <FirjanLogo className="h-10 w-auto" showSubText={false} />
+                <img 
+                  src="/impacta_logo.png" 
+                  alt="Ide.IA Card Logo" 
+                  className="h-24 w-auto object-contain mx-auto mix-blend-multiply"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <h2 className="text-sm font-extrabold font-display tracking-widest uppercase text-white pt-1">
                 {isRegistering ? 'Cadastro de Colaborador' : 'Acesso ao FIRJAN IMPACTA AI'}
@@ -2136,37 +2129,36 @@ export default function App() {
   // Else render primary dashboard workspace
   return (
     <div className={`min-h-screen bg-black text-zinc-100 flex flex-col md:flex-row relative z-10 selection:bg-purple-500/30 selection:text-white textSize-${accessibility.fontSize} ${accessibility.dyslexicFont ? 'dyslexic-font-active' : ''}`}>
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-green-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
       {/* Backdrop for mobile drawer sidebar */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/70 z-30 md:hidden animate-in fade-in"
+          className="fixed inset-0 bg-black/40 z-30 md:hidden animate-in fade-in"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar Navigation (Reconfigurado para ser responsivo, eliminando espaços vazios) */}
-      <aside className={`w-64 border-r border-zinc-900 bg-zinc-950 flex flex-col justify-between py-5 px-4 shrink-0 h-screen overflow-y-auto z-40 fixed md:static inset-y-0 left-0 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      {/* Sidebar Navigation */}
+      <aside className={`w-64 border-r border-zinc-250 bg-zinc-950 flex flex-col justify-between py-5 px-4 shrink-0 h-screen overflow-y-auto z-40 fixed md:static inset-y-0 left-0 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="space-y-6">
           
           {/* Brand header */}
-          <div className="flex flex-col gap-2 pb-3 border-b border-zinc-900/80 text-left">
+          <div className="flex flex-col gap-2 pb-3 border-b border-zinc-200 text-left">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FirjanLogo className="h-9 w-auto text-white" showSubText={true} />
-                <div className="border-l border-zinc-850 pl-2 leading-none">
-                  <span className="text-[10px] font-black text-green-400 block tracking-wider">CONNECT</span>
-                  <span className="text-[7px] text-zinc-500 font-mono block">RJ 2026</span>
-                </div>
+                <img 
+                  src="/impacta_logo.png" 
+                  alt="Ide.IA Logo" 
+                  className="h-24 w-auto object-contain mix-blend-multiply"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               
               {/* Collapse button on mobile sidebar open */}
               <button
                 id="sidebar_mobile_close"
                 onClick={() => setIsSidebarOpen(false)}
-                className="md:hidden text-zinc-500 hover:text-white p-1 ml-2"
+                className="md:hidden text-zinc-500 hover:text-zinc-800 p-1 ml-2"
               >
                 <X className="w-4 h-4" />
               </button>

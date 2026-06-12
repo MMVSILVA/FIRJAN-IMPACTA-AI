@@ -6,12 +6,36 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-purple-500: #9D4EDD;
-  --color-purple-600: #7B2CBF;
-  --color-purple-700: #5A189A;
-  --color-green-400: #00FF41;
-  --color-green-500: #00E436;
-  --color-zinc-950: #040406;
+  /* Azul Firjan (Cobalto): #003399 */
+  --color-purple-400: #1C52FF;
+  --color-purple-500: #1A5CFF;
+  --color-purple-600: #003399;
+  --color-purple-700: #002266;
+  --color-purple-800: #001A4E;
+  --color-purple-900: #E6EEFF;
+  --color-purple-950: #F0F4FF;
+  
+  --color-green-400: #10B981;
+  --color-green-500: #003399;
+  
+  /* Symmetry inversion mapping to keep all existing classes fully responsive and functional, but in pristine light mode! */
+  --color-black: #F8FAFC;          /* Outer white/gray background */
+  --color-zinc-950: #FFFFFF;       /* Inner container white background */
+  --color-zinc-900: #F1F5F9;       /* Card white/gray background */
+  --color-zinc-850: #E2E8F0;       /* Border color */
+  --color-zinc-800: #E2E8F0;       /* Border color */
+  --color-zinc-750: #D1D5DB;
+  --color-zinc-700: #CBD5E1;       /* Border / secondary gray */
+  --color-zinc-650: #94A3B8;
+  --color-zinc-600: #64748B;       /* Text secondary color (slate-500) */
+  --color-zinc-550: #475569;
+  --color-zinc-500: #475569;       /* Text regular color (slate-600) */
+  --color-zinc-400: #334155;       /* Text strong color (slate-700) */
+  --color-zinc-350: #1E293B;
+  --color-zinc-300: #1E293B;       /* Text primary title color (slate-800) */
+  --color-zinc-200: #0F172A;       /* Text darkest header color (slate-900) */
+  --color-zinc-100: #0F172A;       /* Text darkest header color (slate-900) */
+  --color-zinc-50: #020617;        /* Black text */
 }
 
 /* Custom scrollbars for the glassmorphic sidebar and chats */
@@ -21,95 +45,84 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(5, 5, 8, 0.6);
+  background: #F1F5F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(157, 78, 221, 0.35);
+  background: rgba(0, 51, 153, 0.2);
   border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 65, 0.6);
+  background: rgba(0, 51, 153, 0.4);
+}
+
+@keyframes glassEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Glassmorphism utility classes - High Fidelity & Deeply Polished */
 .glass-panel {
-  background: rgba(10, 10, 14, 0.85);
-  backdrop-filter: blur(20px) saturate(190%);
-  -webkit-backdrop-filter: blur(20px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1.5rem; /* rounded-3xl */
+  animation: glassEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 51, 153, 0.12);
+  box-shadow: 0 8px 30px rgba(0, 51, 153, 0.04);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-panel:hover {
-  border-color: rgba(255, 255, 255, 0.07);
+  transform: scale(1.03);
+  border-color: rgba(0, 51, 153, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 51, 153, 0.12);
 }
 
 .glass-panel-purple {
-  background: rgba(18, 10, 32, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(157, 78, 221, 0.22);
-  box-shadow: 0 10px 30px rgba(157, 78, 221, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  background: rgba(240, 244, 255, 0.95);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 51, 153, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 51, 153, 0.02);
 }
 
 .glass-panel-green {
-  background: rgba(6, 16, 10, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 255, 65, 0.22);
-  box-shadow: 0 10px 30px rgba(0, 255, 65, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  background: rgba(240, 253, 244, 0.95);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 51, 153, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 51, 153, 0.02);
 }
 
 /* Neon Glows & Polish Enhancements */
 .neon-glow-purple {
-  box-shadow: 0 0 20px rgba(157, 78, 221, 0.15);
+  box-shadow: 0 0 20px rgba(0, 51, 153, 0.08);
 }
 
 .neon-glow-green {
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.15);
+  box-shadow: 0 0 20px rgba(0, 51, 153, 0.08);
 }
 
 /* High Contrast mode helper styles */
 .high-contrast-mode {
-  background: #000000 !important;
-  color: #ffffff !important;
+  background: #FFFFFF !important;
+  color: #000000 !important;
 }
 
 .high-contrast-mode .glass-panel,
 .high-contrast-mode .glass-panel-purple,
 .high-contrast-mode .glass-panel-green {
-  background: #000000 !important;
-  border: 2px solid #ffffff !important;
+  background: #FFFFFF !important;
+  border: 2px solid #003399 !important;
   box-shadow: none !important;
-}
-
-.high-contrast-mode text, 
-.high-contrast-mode h1, 
-.high-contrast-mode h2, 
-.high-contrast-mode h3, 
-.high-contrast-mode h4, 
-.high-contrast-mode p, 
-.high-contrast-mode span,
-.high-contrast-mode label {
-  color: #ffffff !important;
-}
-
-.high-contrast-mode button, 
-.high-contrast-mode a {
-  border: 2px solid #22c55e !important;
-  background-color: #000000 !important;
-  color: #ffffff !important;
-}
-
-.high-contrast-mode input,
-.high-contrast-mode select,
-.high-contrast-mode textarea {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 2px solid #a855f7 !important;
 }
 
 /* Dyslexic font family helper */
@@ -122,17 +135,51 @@
 
 /* Focus outlines for better keyboard accessibility */
 *:focus-visible {
-  outline: 2px solid #22c55e;
+  outline: 2px solid #003399;
   outline-offset: 2px;
 }
 
-/* Force black background on html and body to eliminate browser white default space */
+/* Force off-white/light-gray background on html and body */
 html, body {
-  background-color: #000000 !important;
-  color: #f4f4f5 !important;
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
   margin: 0;
   padding: 0;
   min-height: 100%;
+}
+
+/* Ensure white text is adapted where necessary on white backgrounds, but clean on buttons */
+p.text-white,
+span.text-white,
+div.text-white,
+h1.text-white,
+h2.text-white,
+h3.text-white,
+h4.text-white {
+  color: #0F172A;
+}
+
+/* Crisp white text for buttons, badges, or colored containers */
+button.text-white,
+button .text-white,
+.text-white-force,
+.bg-purple-600,
+.bg-purple-600 *,
+.bg-purple-700,
+.bg-purple-700 *,
+.bg-purple-500,
+.bg-purple-500 *,
+.bg-emerald-600,
+.bg-emerald-600 *,
+.bg-green-600,
+.bg-green-600 *,
+.bg-red-600,
+.bg-red-600 *,
+.bg-red-500,
+.bg-red-500 *,
+button span,
+button div {
+  color: #FFFFFF !important;
 }
 
 /* Global Font size overrides (Responsive & Accessibility scalable text) */
